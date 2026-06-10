@@ -19,7 +19,8 @@ public class Main {
             // Wait for connection from client.
             clientSocket = serverSocket.accept();
             //Write PONG to the outputstream of the client socket
-            clientSocket.getOutputStream().write("PONG\r\n".getBytes());
+            //remember to start with +, because in RESP(Redis Serialization Protocol) protocol, + indicates a simple string response
+            clientSocket.getOutputStream().write("+PONG\r\n".getBytes());
         } catch (IOException e) {
             System.out.println("IOException: " + e.getMessage());
         } finally {
