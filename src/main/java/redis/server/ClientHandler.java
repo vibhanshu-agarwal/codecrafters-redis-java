@@ -6,12 +6,15 @@ import redis.protocol.RespParser;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
+import java.util.Map;
 
 public class ClientHandler {
     private final Socket clientSocket;
+    private final Map<String, byte[]> keyValuePairs;
 
-    public ClientHandler(Socket clientSocket) {
+    public ClientHandler(Socket clientSocket, Map<String, byte[]> keyValuePairs) {
         this.clientSocket = clientSocket;
+        this.keyValuePairs = keyValuePairs;
     }
 
     /**
@@ -37,10 +40,10 @@ public class ClientHandler {
             RespParser parser = new RespParser(inputStream);
             CommandHandler commandHandler = new CommandHandler();
 
-            List<String> command;
+            List<byte[]> command;
             while ((command = parser.readCommand()) != null) {
-                String response = commandHandler.handleCommand(command);
-                outputStream.write(response.getBytes(StandardCharsets.UTF_8));
+                byte[] response = commandHandler.handleCommand(command, keyValuePairs);
+                outputStream.write(response);
             }
         } catch (Exception e) {
             System.out.println("Client handler error: " + e.getMessage());

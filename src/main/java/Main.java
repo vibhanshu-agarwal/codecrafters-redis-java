@@ -3,8 +3,14 @@ import redis.server.ClientHandler;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
 
 public class Main {
+
+    //Add a ConcurentHashMap for storing key-value pairs in memory
+    private static final Map<String, byte[]> keyValuePairs = new ConcurrentHashMap<>();
+
     public static void main(String[] args) {
         // You can use print statements as follows for debugging, they'll be visible when running tests.
         System.out.println("Logs from your program will appear here!");
@@ -18,7 +24,7 @@ public class Main {
             // Wait for connection from client.
             while (true) {
                 Socket clientSocket = serverSocket.accept();
-                Thread.startVirtualThread(() -> handleClient(clientSocket));
+                Thread.startVirtualThread(() -> handleClient(clientSocket, keyValuePairs));
             }
         } catch (IOException e) {
             //Add a sout
@@ -26,7 +32,7 @@ public class Main {
         }
     }
 
-    private static void handleClient(Socket clientSocket) {
-        new ClientHandler(clientSocket).handle();
+    private static void handleClient(Socket clientSocket, Map<String, byte[]> keyValuePairs) {
+        new ClientHandler(clientSocket, keyValuePairs).handle();
     }
 }
