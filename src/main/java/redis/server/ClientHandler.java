@@ -2,6 +2,7 @@ package redis.server;
 
 import redis.command.CommandHandler;
 import redis.protocol.RespParser;
+import redis.storage.StoredValue;
 
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
@@ -10,9 +11,9 @@ import java.util.Map;
 
 public class ClientHandler {
     private final Socket clientSocket;
-    private final Map<String, byte[]> keyValuePairs;
+    private final Map<String, StoredValue> keyValuePairs;
 
-    public ClientHandler(Socket clientSocket, Map<String, byte[]> keyValuePairs) {
+    public ClientHandler(Socket clientSocket, Map<String, StoredValue> keyValuePairs) {
         this.clientSocket = clientSocket;
         this.keyValuePairs = keyValuePairs;
     }
