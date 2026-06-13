@@ -19,6 +19,7 @@ public class CommandHandler {
     commands.put("SET", new SetCommand());
     commands.put("GET", new GetCommand());
     commands.put("RPUSH", new RPushCommand());
+    commands.put("LRANGE", new LRangeCommand());
   }
 
   /**
