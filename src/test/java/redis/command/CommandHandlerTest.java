@@ -157,4 +157,39 @@ class CommandHandlerTest {
         String expected = "*3\r\n$1\r\nc\r\n$1\r\nb\r\n$1\r\na\r\n";
         assertEquals(expected, new String(lrangeResponse, StandardCharsets.UTF_8));
     }
+
+    /**
+     * Validates LLEN command returns the list length and 0 for a missing list
+     */
+    @Test
+    void testHandleLLenCommand() {
+        CommandHandler handler = new CommandHandler();
+        Map<String, StoredValue> storage = new HashMap<>();
+
+        // RPUSH
+        List<byte[]> rpushParts = new ArrayList<>();
+        rpushParts.add("RPUSH".getBytes(StandardCharsets.UTF_8));
+        rpushParts.add("list_key".getBytes(StandardCharsets.UTF_8));
+        rpushParts.add("a".getBytes(StandardCharsets.UTF_8));
+        rpushParts.add("b".getBytes(StandardCharsets.UTF_8));
+        rpushParts.add("c".getBytes(StandardCharsets.UTF_8));
+        rpushParts.add("d".getBytes(StandardCharsets.UTF_8));
+        handler.handleCommand(rpushParts, storage);
+
+        // LLEN existing list
+        List<byte[]> llenParts = new ArrayList<>();
+        llenParts.add("LLEN".getBytes(StandardCharsets.UTF_8));
+        llenParts.add("list_key".getBytes(StandardCharsets.UTF_8));
+
+        byte[] response = handler.handleCommand(llenParts, storage);
+        assertEquals(":4\r\n", new String(response, StandardCharsets.UTF_8));
+
+        // LLEN missing list
+        List<byte[]> missingLlenParts = new ArrayList<>();
+        missingLlenParts.add("LLEN".getBytes(StandardCharsets.UTF_8));
+        missingLlenParts.add("missing_list_key".getBytes(StandardCharsets.UTF_8));
+
+        byte[] missingResponse = handler.handleCommand(missingLlenParts, storage);
+        assertEquals(":0\r\n", new String(missingResponse, StandardCharsets.UTF_8));
+    }
 }
