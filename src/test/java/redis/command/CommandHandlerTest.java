@@ -126,4 +126,35 @@ class CommandHandlerTest {
         String expected = "*2\r\n$1\r\na\r\n$1\r\nb\r\n";
         assertEquals(expected, new String(response, StandardCharsets.UTF_8));
     }
+
+    /**
+     * Validates LPUSH command prepends elements in reverse order and returns total list size
+     */
+    @Test
+    void testHandleLPushCommand() {
+        CommandHandler handler = new CommandHandler();
+        Map<String, StoredValue> storage = new HashMap<>();
+
+        // LPUSH
+        List<byte[]> lpushParts = new ArrayList<>();
+        lpushParts.add("LPUSH".getBytes(StandardCharsets.UTF_8));
+        lpushParts.add("mylist".getBytes(StandardCharsets.UTF_8));
+        lpushParts.add("a".getBytes(StandardCharsets.UTF_8));
+        lpushParts.add("b".getBytes(StandardCharsets.UTF_8));
+        lpushParts.add("c".getBytes(StandardCharsets.UTF_8));
+
+        byte[] response = handler.handleCommand(lpushParts, storage);
+        assertEquals(":3\r\n", new String(response, StandardCharsets.UTF_8));
+
+        // LRANGE to verify order
+        List<byte[]> lrangeParts = new ArrayList<>();
+        lrangeParts.add("LRANGE".getBytes(StandardCharsets.UTF_8));
+        lrangeParts.add("mylist".getBytes(StandardCharsets.UTF_8));
+        lrangeParts.add("0".getBytes(StandardCharsets.UTF_8));
+        lrangeParts.add("-1".getBytes(StandardCharsets.UTF_8));
+
+        byte[] lrangeResponse = handler.handleCommand(lrangeParts, storage);
+        String expected = "*3\r\n$1\r\nc\r\n$1\r\nb\r\n$1\r\na\r\n";
+        assertEquals(expected, new String(lrangeResponse, StandardCharsets.UTF_8));
+    }
 }

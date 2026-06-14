@@ -13,6 +13,10 @@ public class RedisList extends StoredValue {
     elements.add(value);
   }
 
+  public void lpush(byte[] value) {
+    elements.addFirst(value);
+  }
+
   public List<byte[]> getElements() {
     return elements;
   }

@@ -20,6 +20,7 @@ public class CommandHandler {
     commands.put("GET", new GetCommand());
     commands.put("RPUSH", new RPushCommand());
     commands.put("LRANGE", new LRangeCommand());
+    commands.put("LPUSH", new LPushCommand());
   }
 
   /**

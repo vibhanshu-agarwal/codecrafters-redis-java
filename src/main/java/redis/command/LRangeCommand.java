@@ -12,6 +12,9 @@ import java.util.Map;
 public class LRangeCommand implements Command{
 
 
+    /**
+     * Validates arguments; retrieves list; normalizes indices; returns range slice
+     */
     @Override
     public byte[] execute(List<byte[]> args, Map<String, StoredValue> keyValuePairs) {
         if (args.size() != 3) {
