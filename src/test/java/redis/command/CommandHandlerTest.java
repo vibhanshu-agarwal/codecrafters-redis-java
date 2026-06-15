@@ -192,4 +192,41 @@ class CommandHandlerTest {
         byte[] missingResponse = handler.handleCommand(missingLlenParts, storage);
         assertEquals(":0\r\n", new String(missingResponse, StandardCharsets.UTF_8));
     }
+
+    /**
+     * Validates LPOP command removes and returns the first element of a list
+     */
+    @Test
+    void testHandleLPopCommand() {
+        CommandHandler handler = new CommandHandler();
+        Map<String, StoredValue> storage = new HashMap<>();
+
+        // RPUSH
+        List<byte[]> rpushParts = new ArrayList<>();
+        rpushParts.add("RPUSH".getBytes(StandardCharsets.UTF_8));
+        rpushParts.add("list_key".getBytes(StandardCharsets.UTF_8));
+        rpushParts.add("one".getBytes(StandardCharsets.UTF_8));
+        rpushParts.add("two".getBytes(StandardCharsets.UTF_8));
+        rpushParts.add("three".getBytes(StandardCharsets.UTF_8));
+        handler.handleCommand(rpushParts, storage);
+
+        // LPOP
+        List<byte[]> lpopParts = new ArrayList<>();
+        lpopParts.add("LPOP".getBytes(StandardCharsets.UTF_8));
+        lpopParts.add("list_key".getBytes(StandardCharsets.UTF_8));
+
+        byte[] response = handler.handleCommand(lpopParts, storage);
+        assertEquals("$3\r\none\r\n", new String(response, StandardCharsets.UTF_8));
+
+        // LRANGE to verify remaining elements
+        List<byte[]> lrangeParts = new ArrayList<>();
+        lrangeParts.add("LRANGE".getBytes(StandardCharsets.UTF_8));
+        lrangeParts.add("list_key".getBytes(StandardCharsets.UTF_8));
+        lrangeParts.add("0".getBytes(StandardCharsets.UTF_8));
+        lrangeParts.add("-1".getBytes(StandardCharsets.UTF_8));
+
+        byte[] lrangeResponse = handler.handleCommand(lrangeParts, storage);
+        String expected = "*2\r\n$3\r\ntwo\r\n$5\r\nthree\r\n";
+        assertEquals(expected, new String(lrangeResponse, StandardCharsets.UTF_8));
+    }
 }

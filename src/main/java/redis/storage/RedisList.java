@@ -17,6 +17,13 @@ public class RedisList extends StoredValue {
     elements.addFirst(value);
   }
 
+  public byte[] lpop() {
+    if (elements.isEmpty()) {
+      return null;
+    }
+    return elements.removeFirst();
+  }
+
   public List<byte[]> getElements() {
     return elements;
   }
