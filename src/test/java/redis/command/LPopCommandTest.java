@@ -13,11 +13,11 @@ import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class LPopTest {
+class LPopCommandTest {
 
     @Test
     void testExecuteLPopExistingList() {
-        LPop command = new LPop();
+        LPopCommand command = new LPopCommand();
         Map<String, StoredValue> storage = new HashMap<>();
         RedisList list = new RedisList();
         list.rpush("item1".getBytes(StandardCharsets.UTF_8));
@@ -36,7 +36,7 @@ class LPopTest {
 
     @Test
     void testExecuteLPopEmptyList() {
-        LPop command = new LPop();
+        LPopCommand command = new LPopCommand();
         Map<String, StoredValue> storage = new HashMap<>();
         storage.put("mylist", new RedisList());
 
@@ -49,7 +49,7 @@ class LPopTest {
 
     @Test
     void testExecuteLPopNonExistentKey() {
-        LPop command = new LPop();
+        LPopCommand command = new LPopCommand();
         Map<String, StoredValue> storage = new HashMap<>();
 
         List<byte[]> args = new ArrayList<>();
@@ -61,7 +61,7 @@ class LPopTest {
 
     @Test
     void testExecuteLPopWrongType() {
-        LPop command = new LPop();
+        LPopCommand command = new LPopCommand();
         Map<String, StoredValue> storage = new HashMap<>();
         storage.put("mystring", new RedisString("value".getBytes(StandardCharsets.UTF_8)));
 
@@ -73,8 +73,67 @@ class LPopTest {
     }
 
     @Test
+    void testExecuteLPopWithCount() {
+        LPopCommand command = new LPopCommand();
+        Map<String, StoredValue> storage = new HashMap<>();
+        RedisList list = new RedisList();
+        list.rpush("item1".getBytes(StandardCharsets.UTF_8));
+        list.rpush("item2".getBytes(StandardCharsets.UTF_8));
+        list.rpush("item3".getBytes(StandardCharsets.UTF_8));
+        storage.put("mylist", list);
+
+        List<byte[]> args = new ArrayList<>();
+        args.add("mylist".getBytes(StandardCharsets.UTF_8));
+        args.add("2".getBytes(StandardCharsets.UTF_8));
+
+        byte[] response = command.execute(args, storage);
+        String expected = "*2\r\n$5\r\nitem1\r\n$5\r\nitem2\r\n";
+        assertEquals(expected, new String(response, StandardCharsets.UTF_8));
+
+        assertEquals(1, list.getElements().size());
+        assertEquals("item3", new String(list.getElements().getFirst(), StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void testExecuteLPopWithCountGreaterThanSize() {
+        LPopCommand command = new LPopCommand();
+        Map<String, StoredValue> storage = new HashMap<>();
+        RedisList list = new RedisList();
+        list.rpush("item1".getBytes(StandardCharsets.UTF_8));
+        storage.put("mylist", list);
+
+        List<byte[]> args = new ArrayList<>();
+        args.add("mylist".getBytes(StandardCharsets.UTF_8));
+        args.add("5".getBytes(StandardCharsets.UTF_8));
+
+        byte[] response = command.execute(args, storage);
+        String expected = "*1\r\n$5\r\nitem1\r\n";
+        assertEquals(expected, new String(response, StandardCharsets.UTF_8));
+
+        assertEquals(0, list.getElements().size());
+    }
+
+    @Test
+    void testExecuteLPopWithCountZero() {
+        LPopCommand command = new LPopCommand();
+        Map<String, StoredValue> storage = new HashMap<>();
+        RedisList list = new RedisList();
+        list.rpush("item1".getBytes(StandardCharsets.UTF_8));
+        storage.put("mylist", list);
+
+        List<byte[]> args = new ArrayList<>();
+        args.add("mylist".getBytes(StandardCharsets.UTF_8));
+        args.add("0".getBytes(StandardCharsets.UTF_8));
+
+        byte[] response = command.execute(args, storage);
+        assertEquals("*0\r\n", new String(response, StandardCharsets.UTF_8));
+
+        assertEquals(1, list.getElements().size());
+    }
+
+    @Test
     void testExecuteLPopWrongNumberOfArguments() {
-        LPop command = new LPop();
+        LPopCommand command = new LPopCommand();
         Map<String, StoredValue> storage = new HashMap<>();
         List<byte[]> args = new ArrayList<>();
 

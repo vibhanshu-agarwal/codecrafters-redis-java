@@ -22,7 +22,7 @@ public class CommandHandler {
     commands.put("LRANGE", new LRangeCommand());
     commands.put("LPUSH", new LPushCommand());
     commands.put("LLEN", new LLenCommand());
-    commands.put("LPOP", new LPop());
+    commands.put("LPOP", new LPopCommand());
   }
 
   /**
