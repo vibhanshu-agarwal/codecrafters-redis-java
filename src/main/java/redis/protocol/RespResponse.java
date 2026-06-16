@@ -44,6 +44,10 @@ public class RespResponse {
     return "$-1\r\n".getBytes(StandardCharsets.UTF_8);
   }
 
+  public static byte[] nullArray() {
+    return "*-1\r\n".getBytes(StandardCharsets.UTF_8);
+  }
+
   public static byte[] array(List<byte[]> items) {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     // Serializes list items into RESP array format; handles exceptions

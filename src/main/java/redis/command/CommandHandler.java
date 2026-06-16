@@ -23,6 +23,7 @@ public class CommandHandler {
     commands.put("LPUSH", new LPushCommand());
     commands.put("LLEN", new LLenCommand());
     commands.put("LPOP", new LPopCommand());
+    commands.put("BLPOP", new BLPopCommand());
   }
 
   /**

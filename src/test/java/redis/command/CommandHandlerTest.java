@@ -229,4 +229,28 @@ class CommandHandlerTest {
         String expected = "*2\r\n$3\r\ntwo\r\n$5\r\nthree\r\n";
         assertEquals(expected, new String(lrangeResponse, StandardCharsets.UTF_8));
     }
+
+    /**
+     * Validates CommandHandler registration and dispatch for BLPOP.
+     */
+    @Test
+    void testHandleBLPopCommand() {
+        CommandHandler handler = new CommandHandler();
+        Map<String, StoredValue> storage = new HashMap<>();
+
+        // Seed the list first so this handler-level test does not need to block.
+        List<byte[]> rpushParts = new ArrayList<>();
+        rpushParts.add("RPUSH".getBytes(StandardCharsets.UTF_8));
+        rpushParts.add("list_key".getBytes(StandardCharsets.UTF_8));
+        rpushParts.add("foo".getBytes(StandardCharsets.UTF_8));
+        handler.handleCommand(rpushParts, storage);
+
+        List<byte[]> blpopParts = new ArrayList<>();
+        blpopParts.add("BLPOP".getBytes(StandardCharsets.UTF_8));
+        blpopParts.add("list_key".getBytes(StandardCharsets.UTF_8));
+        blpopParts.add("0".getBytes(StandardCharsets.UTF_8));
+
+        byte[] response = handler.handleCommand(blpopParts, storage);
+        assertEquals("*2\r\n$8\r\nlist_key\r\n$3\r\nfoo\r\n", new String(response, StandardCharsets.UTF_8));
+    }
 }

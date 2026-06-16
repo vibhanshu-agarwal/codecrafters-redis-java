@@ -48,4 +48,10 @@ class RespResponseTest {
         byte[] response = RespResponse.nullBulkString();
         assertEquals("$-1\r\n", new String(response, StandardCharsets.UTF_8));
     }
+
+    @Test
+    void testNullArray() {
+        byte[] response = RespResponse.nullArray();
+        assertEquals("*-1\r\n", new String(response, StandardCharsets.UTF_8));
+    }
 }
