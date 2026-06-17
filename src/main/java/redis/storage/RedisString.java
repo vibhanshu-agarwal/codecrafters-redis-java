@@ -1,5 +1,7 @@
 package redis.storage;
 
+import redis.protocol.RespResponse;
+
 import java.nio.charset.StandardCharsets;
 
 public class RedisString extends StoredValue {
@@ -18,6 +20,11 @@ public class RedisString extends StoredValue {
 
   public byte[] getValue() {
     return value;
+  }
+
+  @Override
+  public byte[] getType() {
+    return RespResponse.simpleString("string");
   }
 
   @Override

@@ -24,6 +24,7 @@ public class CommandHandler {
     commands.put("LLEN", new LLenCommand());
     commands.put("LPOP", new LPopCommand());
     commands.put("BLPOP", new BLPopCommand());
+    commands.put("TYPE", new TypeCommand());
   }
 
   /**

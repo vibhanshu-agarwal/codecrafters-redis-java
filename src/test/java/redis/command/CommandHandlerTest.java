@@ -253,4 +253,49 @@ class CommandHandlerTest {
         byte[] response = handler.handleCommand(blpopParts, storage);
         assertEquals("*2\r\n$8\r\nlist_key\r\n$3\r\nfoo\r\n", new String(response, StandardCharsets.UTF_8));
     }
+
+    /**
+     * Validates TYPE command returns the correct RESP type for various keys
+     */
+    @Test
+    void testHandleTypeCommand() {
+        CommandHandler handler = new CommandHandler();
+        Map<String, StoredValue> storage = new HashMap<>();
+
+        // String type
+        List<byte[]> setParts = new ArrayList<>();
+        setParts.add("SET".getBytes(StandardCharsets.UTF_8));
+        setParts.add("str_key".getBytes(StandardCharsets.UTF_8));
+        setParts.add("value".getBytes(StandardCharsets.UTF_8));
+        handler.handleCommand(setParts, storage);
+
+        List<byte[]> typePartsStr = new ArrayList<>();
+        typePartsStr.add("TYPE".getBytes(StandardCharsets.UTF_8));
+        typePartsStr.add("str_key".getBytes(StandardCharsets.UTF_8));
+
+        byte[] responseStr = handler.handleCommand(typePartsStr, storage);
+        assertEquals("+string\r\n", new String(responseStr, StandardCharsets.UTF_8));
+
+        // List type
+        List<byte[]> rpushParts = new ArrayList<>();
+        rpushParts.add("RPUSH".getBytes(StandardCharsets.UTF_8));
+        rpushParts.add("list_key".getBytes(StandardCharsets.UTF_8));
+        rpushParts.add("a".getBytes(StandardCharsets.UTF_8));
+        handler.handleCommand(rpushParts, storage);
+
+        List<byte[]> typePartsList = new ArrayList<>();
+        typePartsList.add("TYPE".getBytes(StandardCharsets.UTF_8));
+        typePartsList.add("list_key".getBytes(StandardCharsets.UTF_8));
+
+        byte[] responseList = handler.handleCommand(typePartsList, storage);
+        assertEquals("+list\r\n", new String(responseList, StandardCharsets.UTF_8));
+
+        // Non-existing type
+        List<byte[]> typePartsNone = new ArrayList<>();
+        typePartsNone.add("TYPE".getBytes(StandardCharsets.UTF_8));
+        typePartsNone.add("missing_key".getBytes(StandardCharsets.UTF_8));
+
+        byte[] responseNone = handler.handleCommand(typePartsNone, storage);
+        assertEquals("+none\r\n", new String(responseNone, StandardCharsets.UTF_8));
+    }
 }

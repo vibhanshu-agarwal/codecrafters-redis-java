@@ -18,4 +18,6 @@ public abstract class StoredValue {
   public boolean isExpired() {
     return expiryTime > 0 && System.currentTimeMillis() > expiryTime;
   }
+
+  public abstract byte[] getType();
 }

@@ -1,5 +1,7 @@
 package redis.storage;
 
+import redis.protocol.RespResponse;
+
 import java.util.List;
 
 public class RedisList extends StoredValue {
@@ -26,5 +28,10 @@ public class RedisList extends StoredValue {
 
   public List<byte[]> getElements() {
     return elements;
+  }
+
+  @Override
+  public byte[] getType() {
+    return RespResponse.simpleString("list");
   }
 }

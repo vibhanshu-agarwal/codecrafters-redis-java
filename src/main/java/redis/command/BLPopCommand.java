@@ -40,6 +40,9 @@ public class BLPopCommand implements Command {
     }
   }
 
+  /**
+   * Validates a list type; pops an element; returns a key-value pair array
+   */
   private byte[] tryPop(String key, Map<String, StoredValue> keyValuePairs) {
     StoredValue existingValue = keyValuePairs.get(key);
 

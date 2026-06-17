@@ -52,7 +52,7 @@ public class RespResponse {
     ByteArrayOutputStream out = new ByteArrayOutputStream();
     // Serializes list items into RESP array format; handles exceptions
     try {
-      out.write(("*"+ items.size() + "\r\n").getBytes(StandardCharsets.UTF_8));
+      out.write(("*" + items.size() + "\r\n").getBytes(StandardCharsets.UTF_8));
       for (byte[] item : items) {
         out.write(bulkString(item));
       }
@@ -64,5 +64,10 @@ public class RespResponse {
 
   public static byte[] emptyArray() {
     return "*0\r\n".getBytes(StandardCharsets.UTF_8);
+  }
+
+  // Add a byte[] for none
+  public static byte[] none() {
+    return simpleString("none");
   }
 }
