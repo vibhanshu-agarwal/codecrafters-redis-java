@@ -62,6 +62,23 @@ public class RespResponse {
     return out.toByteArray();
   }
 
+  // RespResponse.marshalledArray(List<byte[]> encodedItems):
+  // Unlike the existing array() method which wraps every item in a Bulk String, this method will
+  // simply join the already encoded RESP elements into a new RESP array. This is required because
+  // XRANGE returns an array of arrays.
+  public static byte[] marshalledArray(List<byte[]> encodedItems) {
+    ByteArrayOutputStream out = new ByteArrayOutputStream();
+    try {
+      out.write(("*" + encodedItems.size() + "\r\n").getBytes(StandardCharsets.UTF_8));
+      for (byte[] item : encodedItems) {
+        out.write(item);
+      }
+    } catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+    return out.toByteArray();
+  }
+
   public static byte[] emptyArray() {
     return "*0\r\n".getBytes(StandardCharsets.UTF_8);
   }

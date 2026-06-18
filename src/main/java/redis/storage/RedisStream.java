@@ -22,7 +22,7 @@ public class RedisStream extends StoredValue {
   }
 
   // Create a StreamEntry inner class
-  private static class StreamEntry {
+  public static class StreamEntry {
     private final String id;
     private final Map<String, byte[]> fields;
 
@@ -44,6 +44,24 @@ public class RedisStream extends StoredValue {
     StreamEntry entry = new StreamEntry(id, fields); // Create a new StreamEntry
     entries.add(entry); // Add the entry to the list
   }
+
+  // getEntriesInRange
+  public List<StreamEntry> getEntriesInRange(StreamId start, StreamId end) {
+    List<StreamEntry> range = new ArrayList<>();
+    for (StreamEntry entry : entries) {
+      StreamId entryId = new StreamId(entry.getId());
+      if (entryId.compareTo(start) >= 0 && entryId.compareTo(end) <= 0) {
+        range.add(entry);
+      }
+    }
+    return range;
+  }
+
+  // getEntries
+  public List<StreamEntry> getEntries() {
+    return entries;
+  }
+
 
   public String getLastId() {
     if (entries.isEmpty()) {

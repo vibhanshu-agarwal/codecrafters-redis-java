@@ -26,6 +26,7 @@ public class CommandHandler {
     commands.put("BLPOP", new BLPopCommand());
     commands.put("TYPE", new TypeCommand());
     commands.put("XADD", new XAddCommand());
+    commands.put("XRANGE", new XRangeCommand());
   }
 
   /**

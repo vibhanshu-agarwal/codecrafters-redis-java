@@ -316,5 +316,47 @@ class CommandHandlerTest {
 
         byte[] response = handler.handleCommand(xaddParts, storage);
         assertEquals("$3\r\n0-1\r\n", new String(response, StandardCharsets.UTF_8));
+      }
+
+      /**
+       * Validates XRANGE command returns elements in the specified range
+       */
+      @Test
+      void testHandleXRangeCommand() {
+        CommandHandler handler = new CommandHandler();
+        Map<String, StoredValue> storage = new HashMap<>();
+
+        // XADD some entries
+        List<byte[]> xadd1 = List.of(
+            "XADD".getBytes(StandardCharsets.UTF_8),
+            "mystream".getBytes(StandardCharsets.UTF_8),
+            "0-1".getBytes(StandardCharsets.UTF_8),
+            "foo".getBytes(StandardCharsets.UTF_8),
+            "bar".getBytes(StandardCharsets.UTF_8)
+        );
+        handler.handleCommand(xadd1, storage);
+
+        List<byte[]> xadd2 = List.of(
+            "XADD".getBytes(StandardCharsets.UTF_8),
+            "mystream".getBytes(StandardCharsets.UTF_8),
+            "0-2".getBytes(StandardCharsets.UTF_8),
+            "baz".getBytes(StandardCharsets.UTF_8),
+            "qux".getBytes(StandardCharsets.UTF_8)
+        );
+        handler.handleCommand(xadd2, storage);
+
+        // XRANGE
+        List<byte[]> xrangeParts = List.of(
+            "XRANGE".getBytes(StandardCharsets.UTF_8),
+            "mystream".getBytes(StandardCharsets.UTF_8),
+            "0-1".getBytes(StandardCharsets.UTF_8),
+            "0-2".getBytes(StandardCharsets.UTF_8)
+        );
+
+        byte[] response = handler.handleCommand(xrangeParts, storage);
+        String expected = "*2\r\n" +
+            "*2\r\n$3\r\n0-1\r\n*2\r\n$3\r\nfoo\r\n$3\r\nbar\r\n" +
+            "*2\r\n$3\r\n0-2\r\n*2\r\n$3\r\nbaz\r\n$3\r\nqux\r\n";
+        assertEquals(expected, new String(response, StandardCharsets.UTF_8));
+      }
     }
-}

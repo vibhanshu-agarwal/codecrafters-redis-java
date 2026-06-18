@@ -3,6 +3,7 @@ package redis.command;
 import redis.protocol.RespResponse;
 import redis.storage.RedisStream;
 import redis.storage.StoredValue;
+import redis.storage.StreamId;
 
 import java.nio.charset.StandardCharsets;
 import java.util.LinkedHashMap;
@@ -17,7 +18,7 @@ public class XAddCommand implements Command {
     }
 
     // Validate that the key if it exists is of type stream
-    String key = new String(args.get(0), StandardCharsets.UTF_8);
+    String key = new String(args.getFirst(), StandardCharsets.UTF_8);
     String id = new String(args.get(1), StandardCharsets.UTF_8);
 
     StoredValue storedValue = keyValuePairs.get(key);
@@ -47,16 +48,17 @@ public class XAddCommand implements Command {
         seq = (ms == 0) ? 1 : 0;
       } else {
         StreamId lastId = new StreamId(lastIdStr);
-        if (ms == lastId.milliseconds) {
-          seq = lastId.sequence + 1;
-        } else if (ms > lastId.milliseconds) {
+        if (ms == lastId.getMilliseconds()) {
+          seq = lastId.getSequence() + 1;
+        } else if (ms > lastId.getMilliseconds()) {
           seq = (ms == 0) ? 1 : 0;
         } else {
           if (id.equals("*")) {
-            ms = lastId.milliseconds;
-            seq = lastId.sequence + 1;
+            ms = lastId.getMilliseconds();
+            seq = lastId.getSequence() + 1;
           } else {
-            return RespResponse.error("The ID specified in XADD is equal or smaller than the target stream top item");
+            return RespResponse.error(
+                "The ID specified in XADD is equal or smaller than the target stream top item");
           }
         }
       }
@@ -71,7 +73,8 @@ public class XAddCommand implements Command {
       StreamId currentId = new StreamId(id);
       StreamId lastId = new StreamId(lastIdStr);
       if (currentId.compareTo(lastId) <= 0) {
-        return RespResponse.error("The ID specified in XADD is equal or smaller than the target stream top item");
+        return RespResponse.error(
+            "The ID specified in XADD is equal or smaller than the target stream top item");
       }
     }
 
@@ -89,24 +92,5 @@ public class XAddCommand implements Command {
     stream.addEntry(id, fields);
 
     return RespResponse.bulkString(id.getBytes(StandardCharsets.UTF_8));
-  }
-
-  private static class StreamId implements Comparable<StreamId> {
-    private final long milliseconds;
-    private final long sequence;
-
-    public StreamId(String id) {
-      String[] parts = id.split("-");
-      this.milliseconds = Long.parseLong(parts[0]);
-      this.sequence = Long.parseLong(parts[1]);
-    }
-
-    @Override
-    public int compareTo(StreamId other) {
-      if (this.milliseconds != other.milliseconds) {
-        return Long.compare(this.milliseconds, other.milliseconds);
-      }
-      return Long.compare(this.sequence, other.sequence);
-    }
   }
 }
