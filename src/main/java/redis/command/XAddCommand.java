@@ -32,11 +32,30 @@ public class XAddCommand implements Command {
       return RespResponse.wrongType();
     }
 
+    String lastIdStr = stream.getLastId();
+
+    if (id.endsWith("-*")) {
+      long ms = Long.parseLong(id.split("-")[0]);
+      long seq;
+      if (lastIdStr == null) {
+        seq = (ms == 0) ? 1 : 0;
+      } else {
+        StreamId lastId = new StreamId(lastIdStr);
+        if (ms == lastId.milliseconds) {
+          seq = lastId.sequence + 1;
+        } else if (ms > lastId.milliseconds) {
+          seq = (ms == 0) ? 1 : 0;
+        } else {
+          return RespResponse.error("The ID specified in XADD is equal or smaller than the target stream top item");
+        }
+      }
+      id = ms + "-" + seq;
+    }
+
     if (id.equals("0-0")) {
       return RespResponse.error("The ID specified in XADD must be greater than 0-0");
     }
 
-    String lastIdStr = stream.getLastId();
     if (lastIdStr != null) {
       StreamId currentId = new StreamId(id);
       StreamId lastId = new StreamId(lastIdStr);
