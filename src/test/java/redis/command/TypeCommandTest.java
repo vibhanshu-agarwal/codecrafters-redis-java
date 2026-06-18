@@ -3,6 +3,7 @@ package redis.command;
 import org.junit.jupiter.api.Test;
 import redis.protocol.RespResponse;
 import redis.storage.RedisList;
+import redis.storage.RedisStream;
 import redis.storage.RedisString;
 import redis.storage.StoredValue;
 
@@ -52,6 +53,19 @@ class TypeCommandTest {
 
         byte[] response = command.execute(args, storage);
         assertEquals("+list\r\n", new String(response, StandardCharsets.UTF_8));
+    }
+
+    @Test
+    void testExecuteTypeStreamKey() {
+        TypeCommand command = new TypeCommand();
+        Map<String, StoredValue> storage = new HashMap<>();
+        storage.put("key", new RedisStream());
+
+        List<byte[]> args = new ArrayList<>();
+        args.add("key".getBytes(StandardCharsets.UTF_8));
+
+        byte[] response = command.execute(args, storage);
+        assertEquals("+stream\r\n", new String(response, StandardCharsets.UTF_8));
     }
 
     @Test

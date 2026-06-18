@@ -298,4 +298,23 @@ class CommandHandlerTest {
         byte[] responseNone = handler.handleCommand(typePartsNone, storage);
         assertEquals("+none\r\n", new String(responseNone, StandardCharsets.UTF_8));
     }
+
+    /**
+     * Validates XADD command appends entry to stream and returns ID
+     */
+    @Test
+    void testHandleXAddCommand() {
+        CommandHandler handler = new CommandHandler();
+        Map<String, StoredValue> storage = new HashMap<>();
+
+        List<byte[]> xaddParts = new ArrayList<>();
+        xaddParts.add("XADD".getBytes(StandardCharsets.UTF_8));
+        xaddParts.add("mystream".getBytes(StandardCharsets.UTF_8));
+        xaddParts.add("0-1".getBytes(StandardCharsets.UTF_8));
+        xaddParts.add("foo".getBytes(StandardCharsets.UTF_8));
+        xaddParts.add("bar".getBytes(StandardCharsets.UTF_8));
+
+        byte[] response = handler.handleCommand(xaddParts, storage);
+        assertEquals("$3\r\n0-1\r\n", new String(response, StandardCharsets.UTF_8));
+    }
 }
