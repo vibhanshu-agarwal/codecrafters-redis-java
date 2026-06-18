@@ -26,11 +26,27 @@ public class XAddCommand implements Command {
     if (storedValue == null) {
       // If the stream does not exist, we create one
       stream = new RedisStream();
-      keyValuePairs.put(key, stream);
     } else if (storedValue instanceof RedisStream) {
       stream = (RedisStream) storedValue;
     } else {
       return RespResponse.wrongType();
+    }
+
+    if (id.equals("0-0")) {
+      return RespResponse.error("The ID specified in XADD must be greater than 0-0");
+    }
+
+    String lastIdStr = stream.getLastId();
+    if (lastIdStr != null) {
+      StreamId currentId = new StreamId(id);
+      StreamId lastId = new StreamId(lastIdStr);
+      if (currentId.compareTo(lastId) <= 0) {
+        return RespResponse.error("The ID specified in XADD is equal or smaller than the target stream top item");
+      }
+    }
+
+    if (storedValue == null) {
+      keyValuePairs.put(key, stream);
     }
 
     Map<String, byte[]> fields = new LinkedHashMap<>();
@@ -43,5 +59,24 @@ public class XAddCommand implements Command {
     stream.addEntry(id, fields);
 
     return RespResponse.bulkString(id.getBytes(StandardCharsets.UTF_8));
+  }
+
+  private static class StreamId implements Comparable<StreamId> {
+    private final long milliseconds;
+    private final long sequence;
+
+    public StreamId(String id) {
+      String[] parts = id.split("-");
+      this.milliseconds = Long.parseLong(parts[0]);
+      this.sequence = Long.parseLong(parts[1]);
+    }
+
+    @Override
+    public int compareTo(StreamId other) {
+      if (this.milliseconds != other.milliseconds) {
+        return Long.compare(this.milliseconds, other.milliseconds);
+      }
+      return Long.compare(this.sequence, other.sequence);
+    }
   }
 }

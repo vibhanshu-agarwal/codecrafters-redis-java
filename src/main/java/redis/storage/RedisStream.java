@@ -45,5 +45,10 @@ public class RedisStream extends StoredValue {
     entries.add(entry); // Add the entry to the list
   }
 
-
+  public String getLastId() {
+    if (entries.isEmpty()) {
+      return null;
+    }
+    return entries.getLast().getId();
+  }
 }
