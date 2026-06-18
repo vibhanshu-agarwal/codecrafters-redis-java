@@ -138,4 +138,64 @@ class XAddCommandTest {
         byte[] response4 = command.execute(args3, storage);
         assertEquals("$3\r\n0-2\r\n", new String(response4, StandardCharsets.UTF_8));
     }
+
+    @Test
+    void testExecuteXAddFullAutoGenerate() {
+        XAddCommand command = new XAddCommand();
+        Map<String, StoredValue> storage = new HashMap<>();
+
+        List<byte[]> args = new ArrayList<>();
+        args.add("mystream".getBytes(StandardCharsets.UTF_8));
+        args.add("*".getBytes(StandardCharsets.UTF_8));
+        args.add("foo".getBytes(StandardCharsets.UTF_8));
+        args.add("bar".getBytes(StandardCharsets.UTF_8));
+
+        long before = System.currentTimeMillis();
+        byte[] response = command.execute(args, storage);
+        long after = System.currentTimeMillis();
+
+        String res = new String(response, StandardCharsets.UTF_8);
+        assertTrue(res.startsWith("$"), "Response should be a bulk string");
+        String id = res.split("\r\n")[1];
+        String[] parts = id.split("-");
+        assertEquals(2, parts.length);
+        long ms = Long.parseLong(parts[0]);
+        long seq = Long.parseLong(parts[1]);
+
+        assertTrue(ms >= before && ms <= after, "Generated timestamp should be around current time");
+        assertEquals(0, seq, "Sequence should be 0 for a new timestamp");
+    }
+
+    @Test
+    void testExecuteXAddFullAutoGenerateSequential() {
+        XAddCommand command = new XAddCommand();
+        Map<String, StoredValue> storage = new HashMap<>();
+
+        List<byte[]> args = new ArrayList<>();
+        args.add("mystream".getBytes(StandardCharsets.UTF_8));
+        args.add("*".getBytes(StandardCharsets.UTF_8));
+        args.add("foo".getBytes(StandardCharsets.UTF_8));
+        args.add("bar".getBytes(StandardCharsets.UTF_8));
+
+        byte[] response1 = command.execute(args, storage);
+        byte[] response2 = command.execute(args, storage);
+
+        String id1 = new String(response1, StandardCharsets.UTF_8).split("\r\n")[1];
+        String id2 = new String(response2, StandardCharsets.UTF_8).split("\r\n")[1];
+
+        String[] parts1 = id1.split("-");
+        String[] parts2 = id2.split("-");
+
+        long ms1 = Long.parseLong(parts1[0]);
+        long seq1 = Long.parseLong(parts1[1]);
+        long ms2 = Long.parseLong(parts2[0]);
+        long seq2 = Long.parseLong(parts2[1]);
+
+        if (ms1 == ms2) {
+            assertEquals(seq1 + 1, seq2, "Sequence should increment if timestamp is same");
+        } else {
+            assertTrue(ms2 > ms1, "Timestamp should be monotonic");
+            assertEquals(0, seq2, "Sequence should be 0 for a new timestamp");
+        }
+    }
 }
