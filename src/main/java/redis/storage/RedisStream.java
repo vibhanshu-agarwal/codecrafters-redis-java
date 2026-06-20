@@ -45,7 +45,14 @@ public class RedisStream extends StoredValue {
     entries.add(entry); // Add the entry to the list
   }
 
-  // getEntriesInRange
+
+  /**
+   * Retrieves a list of stream entries within the specified range of identifiers.
+   *
+   * @param start the starting StreamId, inclusive
+   * @param end the ending StreamId, inclusive
+   * @return a list of StreamEntry objects that fall within the specified range
+   */
   public List<StreamEntry> getEntriesInRange(StreamId start, StreamId end) {
     List<StreamEntry> range = new ArrayList<>();
     for (StreamEntry entry : entries) {
@@ -55,6 +62,20 @@ public class RedisStream extends StoredValue {
       }
     }
     return range;
+  }
+
+  /**
+   * Filters stream entries exceeding the specified identifier threshold
+   */
+  public List<StreamEntry> getEntriesGreaterThan(StreamId id) {
+    List<StreamEntry> result = new ArrayList<>();
+    for (StreamEntry entry : entries) {
+      StreamId entryId = new StreamId(entry.getId());
+      if (entryId.compareTo(id) > 0) {
+        result.add(entry);
+      }
+    }
+    return result;
   }
 
   // getEntries

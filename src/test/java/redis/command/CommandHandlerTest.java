@@ -359,4 +359,47 @@ class CommandHandlerTest {
             "*2\r\n$3\r\n0-2\r\n*2\r\n$3\r\nbaz\r\n$3\r\nqux\r\n";
         assertEquals(expected, new String(response, StandardCharsets.UTF_8));
       }
+
+      /**
+       * Validates XREAD command returns elements from multiple streams
+       */
+      @Test
+      void testHandleXReadCommand() {
+        CommandHandler handler = new CommandHandler();
+        Map<String, StoredValue> storage = new HashMap<>();
+
+        // XADD to stream 1
+        handler.handleCommand(List.of(
+            "XADD".getBytes(StandardCharsets.UTF_8),
+            "s1".getBytes(StandardCharsets.UTF_8),
+            "0-1".getBytes(StandardCharsets.UTF_8),
+            "f1".getBytes(StandardCharsets.UTF_8),
+            "v1".getBytes(StandardCharsets.UTF_8)
+        ), storage);
+
+        // XADD to stream 2
+        handler.handleCommand(List.of(
+            "XADD".getBytes(StandardCharsets.UTF_8),
+            "s2".getBytes(StandardCharsets.UTF_8),
+            "0-2".getBytes(StandardCharsets.UTF_8),
+            "f2".getBytes(StandardCharsets.UTF_8),
+            "v2".getBytes(StandardCharsets.UTF_8)
+        ), storage);
+
+        // XREAD STREAMS s1 s2 0-0 0-0
+        List<byte[]> xreadParts = List.of(
+            "XREAD".getBytes(StandardCharsets.UTF_8),
+            "STREAMS".getBytes(StandardCharsets.UTF_8),
+            "s1".getBytes(StandardCharsets.UTF_8),
+            "s2".getBytes(StandardCharsets.UTF_8),
+            "0-0".getBytes(StandardCharsets.UTF_8),
+            "0-0".getBytes(StandardCharsets.UTF_8)
+        );
+
+        byte[] response = handler.handleCommand(xreadParts, storage);
+        String expected = "*2\r\n" +
+            "*2\r\n$2\r\ns1\r\n*1\r\n*2\r\n$3\r\n0-1\r\n*2\r\n$2\r\nf1\r\n$2\r\nv1\r\n" +
+            "*2\r\n$2\r\ns2\r\n*1\r\n*2\r\n$3\r\n0-2\r\n*2\r\n$2\r\nf2\r\n$2\r\nv2\r\n";
+        assertEquals(expected, new String(response, StandardCharsets.UTF_8));
+      }
     }
