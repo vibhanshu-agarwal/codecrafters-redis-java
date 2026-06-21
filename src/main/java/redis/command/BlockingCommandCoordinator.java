@@ -1,6 +1,7 @@
 package redis.command;
 
 import java.util.ArrayDeque;
+import java.util.Collection;
 import java.util.Deque;
 import java.util.HashMap;
 import java.util.Map;
@@ -53,15 +54,37 @@ public final class BlockingCommandCoordinator {
    */
   public static byte[] await(String key, double timeoutSeconds, Supplier<byte[]> responseSupplier)
       throws InterruptedException {
+    return await(java.util.List.of(key), timeoutSeconds, responseSupplier);
+  }
+
+  /**
+   * Waits until {@code responseSupplier} can produce a response for any of the {@code keys}.
+   *
+   * @param keys the keys whose changes can unblock this command
+   * @param timeoutSeconds timeout in seconds; 0 means wait indefinitely
+   * @param responseSupplier returns a command response when ready, or {@code null} when the command
+   *     must keep waiting
+   * @return the command response, or a RESP null array when the timeout expires
+   */
+  public static byte[] await(
+      Collection<String> keys, double timeoutSeconds, Supplier<byte[]> responseSupplier)
+      throws InterruptedException {
     LOCK.lock();
     try {
-      Deque<Condition> waiters = WAITERS_BY_KEY.get(key);
-
       /*
-       * Fast path: a command may complete immediately only when there is no older waiter for this
-       * key. If a queue already exists, this client must join it before trying to consume data.
+       * Fast path: a command may complete immediately only when there is no older waiter for
+       * ALL the keys.
        */
-      if (waiters == null || waiters.isEmpty()) {
+      boolean canTryImmediately = true;
+      for (String key : keys) {
+        Deque<Condition> waiters = WAITERS_BY_KEY.get(key);
+        if (waiters != null && !waiters.isEmpty()) {
+          canTryImmediately = false;
+          break;
+        }
+      }
+
+      if (canTryImmediately) {
         byte[] response = responseSupplier.get();
         if (response != null) {
           return response;
@@ -69,22 +92,40 @@ public final class BlockingCommandCoordinator {
       }
 
       Condition waiter = LOCK.newCondition();
-      waiters = WAITERS_BY_KEY.computeIfAbsent(key, ignored -> new ArrayDeque<>());
-      waiters.addLast(waiter);
+      for (String key : keys) {
+        WAITERS_BY_KEY.computeIfAbsent(key, ignored -> new ArrayDeque<>()).addLast(waiter);
+      }
 
       long remainingNanos = timeoutToNanos(timeoutSeconds);
 
       while (true) {
         /*
-         * Only the oldest waiter gets to test readiness. This gives commands like BLPOP the Redis
-         * behavior where clients blocked on the same key are served in arrival order.
+         * Only the oldest waiter gets to test readiness. For multiple keys, if we are the oldest
+         * on ANY of them, we check readiness.
          */
-        if (waiters.peekFirst() == waiter) {
+        boolean isFirstAny = false;
+        for (String key : keys) {
+          Deque<Condition> waiters = WAITERS_BY_KEY.get(key);
+          if (waiters != null && waiters.peekFirst() == waiter) {
+            isFirstAny = true;
+            break;
+          }
+        }
+
+        if (isFirstAny) {
           byte[] response = responseSupplier.get();
           if (response != null) {
-            waiters.removeFirst();
-            cleanupKeyIfIdle(key, waiters);
-            signalNext(key);
+            for (String key : keys) {
+              Deque<Condition> waiters = WAITERS_BY_KEY.get(key);
+              if (waiters != null) {
+                boolean wasFirst = (waiters.peekFirst() == waiter);
+                waiters.remove(waiter);
+                cleanupKeyIfIdle(key, waiters);
+                if (wasFirst) {
+                  signalNext(key);
+                }
+              }
+            }
             return response;
           }
         }
@@ -93,9 +134,17 @@ public final class BlockingCommandCoordinator {
           waiter.await();
         } else {
           if (remainingNanos <= 0) {
-            waiters.remove(waiter);
-            cleanupKeyIfIdle(key, waiters);
-            signalNext(key);
+            for (String key : keys) {
+              Deque<Condition> waiters = WAITERS_BY_KEY.get(key);
+              if (waiters != null) {
+                boolean wasFirst = (waiters.peekFirst() == waiter);
+                waiters.remove(waiter);
+                cleanupKeyIfIdle(key, waiters);
+                if (wasFirst) {
+                  signalNext(key);
+                }
+              }
+            }
             return RespResponse.nullArray();
           }
 

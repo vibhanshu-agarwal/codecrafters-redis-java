@@ -162,4 +162,69 @@ class XReadCommandTest {
     );
     assertEquals("-ERR Invalid stream ID specified as range start or end\r\n", new String(response, StandardCharsets.UTF_8));
   }
+
+  @Test
+  void testXReadBlock() throws Exception {
+    RedisStream stream = new RedisStream();
+    storage.put("s1", stream);
+
+    long startTime = System.currentTimeMillis();
+
+    java.util.concurrent.CompletableFuture<byte[]> futureResponse = java.util.concurrent.CompletableFuture.supplyAsync(() ->
+        xreadCommand.execute(
+            List.of(
+                "BLOCK".getBytes(StandardCharsets.UTF_8),
+                "1000".getBytes(StandardCharsets.UTF_8),
+                "STREAMS".getBytes(StandardCharsets.UTF_8),
+                "s1".getBytes(StandardCharsets.UTF_8),
+                "0-0".getBytes(StandardCharsets.UTF_8)
+            ),
+            storage
+        )
+    );
+
+    // Give it a bit of time to start and block
+    Thread.sleep(200);
+
+    XAddCommand xaddCommand = new XAddCommand();
+    xaddCommand.execute(
+        List.of(
+            "s1".getBytes(StandardCharsets.UTF_8),
+            "0-1".getBytes(StandardCharsets.UTF_8),
+            "f1".getBytes(StandardCharsets.UTF_8),
+            "v1".getBytes(StandardCharsets.UTF_8)
+        ),
+        storage
+    );
+
+    byte[] response = futureResponse.get(2, java.util.concurrent.TimeUnit.SECONDS);
+    long duration = System.currentTimeMillis() - startTime;
+
+    String expected = "*1\r\n" +
+        "*2\r\n$2\r\ns1\r\n*1\r\n*2\r\n$3\r\n0-1\r\n*2\r\n$2\r\nf1\r\n$2\r\nv1\r\n";
+    assertEquals(expected, new String(response, StandardCharsets.UTF_8));
+    org.junit.jupiter.api.Assertions.assertTrue(duration < 1000, "Should have unblocked before timeout, but took " + duration + "ms");
+  }
+
+  @Test
+  void testXReadBlockTimeout() throws Exception {
+    RedisStream stream = new RedisStream();
+    storage.put("s1", stream);
+
+    long startTime = System.currentTimeMillis();
+    byte[] response = xreadCommand.execute(
+        List.of(
+            "BLOCK".getBytes(StandardCharsets.UTF_8),
+            "100".getBytes(StandardCharsets.UTF_8),
+            "STREAMS".getBytes(StandardCharsets.UTF_8),
+            "s1".getBytes(StandardCharsets.UTF_8),
+            "0-0".getBytes(StandardCharsets.UTF_8)
+        ),
+        storage
+    );
+
+    long duration = System.currentTimeMillis() - startTime;
+    assertEquals("*-1\r\n", new String(response, StandardCharsets.UTF_8));
+    org.junit.jupiter.api.Assertions.assertTrue(duration >= 100, "Should have blocked for at least 100ms, but took " + duration + "ms");
+  }
 }

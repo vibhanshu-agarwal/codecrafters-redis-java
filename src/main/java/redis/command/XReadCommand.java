@@ -14,10 +14,21 @@ public class XReadCommand implements Command {
   @Override
   public byte[] execute(List<byte[]> args, Map<String, StoredValue> keyValuePairs) {
     int streamsIndex = -1;
+    long blockTimeoutMs = -1;
+
     for (int i = 0; i < args.size(); i++) {
-      if ("STREAMS".equalsIgnoreCase(new String(args.get(i), StandardCharsets.UTF_8))) {
+      String arg = new String(args.get(i), StandardCharsets.UTF_8);
+      if ("STREAMS".equalsIgnoreCase(arg)) {
         streamsIndex = i;
         break;
+      } else if ("BLOCK".equalsIgnoreCase(arg)) {
+        if (i + 1 < args.size()) {
+          try {
+            blockTimeoutMs = Long.parseLong(new String(args.get(i + 1), StandardCharsets.UTF_8));
+          } catch (NumberFormatException e) {
+            return RespResponse.error("timeout is not an integer or out of range");
+          }
+        }
       }
     }
 
@@ -39,21 +50,50 @@ public class XReadCommand implements Command {
       ids.add(new String(args.get(streamsIndex + 1 + numStreams + i), StandardCharsets.UTF_8));
     }
 
+    // Handle "$" ID transformation for blocking XREAD
+    if (blockTimeoutMs != -1) {
+      for (int i = 0; i < numStreams; i++) {
+        if ("$".equals(ids.get(i))) {
+          StoredValue storedValue = keyValuePairs.get(keys.get(i));
+          if (storedValue instanceof RedisStream) {
+            String lastId = ((RedisStream) storedValue).getLastId();
+            ids.set(i, lastId != null ? lastId : "0-0");
+          } else {
+            ids.set(i, "0-0");
+          }
+        }
+      }
+
+      try {
+        return BlockingCommandCoordinator.await(
+            keys, blockTimeoutMs / 1000.0, () -> tryRead(keys, ids, keyValuePairs));
+      } catch (InterruptedException e) {
+        Thread.currentThread().interrupt();
+        return RespResponse.error("operation interrupted");
+      }
+    }
+
+    byte[] response = tryRead(keys, ids, keyValuePairs);
+    return response != null ? response : RespResponse.nullArray();
+  }
+
+  private byte[] tryRead(List<String> keys, List<String> ids, Map<String, StoredValue> keyValuePairs) {
     List<byte[]> streamResults = new ArrayList<>();
 
-    for (int i = 0; i < numStreams; i++) {
+    for (int i = 0; i < keys.size(); i++) {
       String key = keys.get(i);
       String idStr = ids.get(i);
 
       StoredValue storedValue = keyValuePairs.get(key);
-      if (storedValue == null) {
-        continue;
-      }
-      if (!(storedValue instanceof RedisStream)) {
+      if (storedValue != null && !(storedValue instanceof RedisStream)) {
         return RespResponse.wrongType();
       }
 
       RedisStream stream = (RedisStream) storedValue;
+      if (stream == null) {
+        continue;
+      }
+
       StreamId startId;
       try {
         startId = StreamId.parse(idStr, true);
@@ -84,7 +124,7 @@ public class XReadCommand implements Command {
     }
 
     if (streamResults.isEmpty()) {
-      return RespResponse.nullArray();
+      return null;
     }
 
     return RespResponse.marshalledArray(streamResults);

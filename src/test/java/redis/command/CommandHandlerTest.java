@@ -402,4 +402,42 @@ class CommandHandlerTest {
             "*2\r\n$2\r\ns2\r\n*1\r\n*2\r\n$3\r\n0-2\r\n*2\r\n$2\r\nf2\r\n$2\r\nv2\r\n";
         assertEquals(expected, new String(response, StandardCharsets.UTF_8));
       }
+
+    /**
+     * Validates blocking XREAD command returns elements when data is added.
+     */
+    @Test
+    void testHandleXReadBlockCommand() throws Exception {
+        CommandHandler handler = new CommandHandler();
+        Map<String, StoredValue> storage = new HashMap<>();
+
+        // Start blocking XREAD in another thread
+        java.util.concurrent.CompletableFuture<byte[]> futureResponse = java.util.concurrent.CompletableFuture.supplyAsync(() -> {
+            List<byte[]> xreadParts = List.of(
+                "XREAD".getBytes(StandardCharsets.UTF_8),
+                "BLOCK".getBytes(StandardCharsets.UTF_8),
+                "1000".getBytes(StandardCharsets.UTF_8),
+                "STREAMS".getBytes(StandardCharsets.UTF_8),
+                "s1".getBytes(StandardCharsets.UTF_8),
+                "0-0".getBytes(StandardCharsets.UTF_8)
+            );
+            return handler.handleCommand(xreadParts, storage);
+        });
+
+        Thread.sleep(200);
+
+        // XADD to stream 1
+        handler.handleCommand(List.of(
+            "XADD".getBytes(StandardCharsets.UTF_8),
+            "s1".getBytes(StandardCharsets.UTF_8),
+            "0-1".getBytes(StandardCharsets.UTF_8),
+            "f1".getBytes(StandardCharsets.UTF_8),
+            "v1".getBytes(StandardCharsets.UTF_8)
+        ), storage);
+
+        byte[] response = futureResponse.get(2, java.util.concurrent.TimeUnit.SECONDS);
+        String expected = "*1\r\n" +
+            "*2\r\n$2\r\ns1\r\n*1\r\n*2\r\n$3\r\n0-1\r\n*2\r\n$2\r\nf1\r\n$2\r\nv1\r\n";
+        assertEquals(expected, new String(response, StandardCharsets.UTF_8));
     }
+}
