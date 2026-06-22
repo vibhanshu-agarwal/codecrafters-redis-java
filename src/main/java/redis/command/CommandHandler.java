@@ -55,6 +55,16 @@ public class CommandHandler {
     }
 
     List<byte[]> args = parts.subList(1, parts.size());
+
+    if (transactionState.isInTransaction() && !isTransactionControlCommand(cmdName)) {
+      transactionState.queueCommand(command, args);
+      return RespResponse.simpleString("QUEUED");
+    }
+
     return command.execute(args, keyValuePairs);
+  }
+
+  private boolean isTransactionControlCommand(String cmdName) {
+    return cmdName.equals("EXEC") || cmdName.equals("MULTI") || cmdName.equals("DISCARD");
   }
 }

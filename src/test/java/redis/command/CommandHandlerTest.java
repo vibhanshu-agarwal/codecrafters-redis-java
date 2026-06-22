@@ -528,4 +528,60 @@ class CommandHandlerTest {
         byte[] secondExecResponse = handler.handleCommand(execParts, storage);
         assertEquals("-ERR EXEC without MULTI\r\n", new String(secondExecResponse, StandardCharsets.UTF_8));
     }
+
+    /**
+     * Validates that MULTI state is isolated between different CommandHandler instances
+     */
+    @Test
+    void testMultiStateIsIsolated() {
+        CommandHandler handler1 = new CommandHandler();
+        CommandHandler handler2 = new CommandHandler();
+        Map<String, StoredValue> storage = new HashMap<>();
+
+        // Start transaction on handler1
+        List<byte[]> multiParts = List.of("MULTI".getBytes(StandardCharsets.UTF_8));
+        handler1.handleCommand(multiParts, storage);
+
+        // EXEC on handler2 should fail because it's a different session
+        List<byte[]> execParts = List.of("EXEC".getBytes(StandardCharsets.UTF_8));
+        byte[] response2 = handler2.handleCommand(execParts, storage);
+        assertEquals("-ERR EXEC without MULTI\r\n", new String(response2, StandardCharsets.UTF_8));
+
+        // EXEC on handler1 should succeed
+        byte[] response1 = handler1.handleCommand(execParts, storage);
+        assertEquals("*0\r\n", new String(response1, StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Validates that commands are queued during a transaction and not executed
+     */
+    @Test
+    void testQueuingCommands() {
+        CommandHandler handler = new CommandHandler();
+        Map<String, StoredValue> storage = new HashMap<>();
+
+        // Start transaction
+        handler.handleCommand(List.of("MULTI".getBytes(StandardCharsets.UTF_8)), storage);
+
+        // Queue SET command
+        byte[] setResponse = handler.handleCommand(List.of(
+                "SET".getBytes(StandardCharsets.UTF_8),
+                "foo".getBytes(StandardCharsets.UTF_8),
+                "41".getBytes(StandardCharsets.UTF_8)
+        ), storage);
+        assertEquals("+QUEUED\r\n", new String(setResponse, StandardCharsets.UTF_8));
+
+        // Verify key does not exist yet (as per requirement: "key foo will not exist")
+        assertNull(storage.get("foo"));
+
+        // Queue INCR command
+        byte[] incrResponse = handler.handleCommand(List.of(
+                "INCR".getBytes(StandardCharsets.UTF_8),
+                "foo".getBytes(StandardCharsets.UTF_8)
+        ), storage);
+        assertEquals("+QUEUED\r\n", new String(incrResponse, StandardCharsets.UTF_8));
+
+        // Verify key still does not exist
+        assertNull(storage.get("foo"));
+    }
 }
