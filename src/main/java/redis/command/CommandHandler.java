@@ -30,6 +30,7 @@ public class CommandHandler {
     commands.put("XREAD", new XReadCommand());
     commands.put("INCR", new IncrCommand());
     commands.put("MULTI", new MultiCommand());
+    commands.put("EXEC", new ExecCommand());
   }
 
   /**

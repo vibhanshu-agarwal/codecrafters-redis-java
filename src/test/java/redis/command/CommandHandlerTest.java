@@ -489,4 +489,18 @@ class CommandHandlerTest {
         byte[] response = handler.handleCommand(parts, storage);
         assertEquals("+OK\r\n", new String(response, StandardCharsets.UTF_8));
     }
+
+    /**
+     * Validates EXEC command returns error when MULTI has not been called
+     */
+    @Test
+    void testHandleExecWithoutMulti() {
+        CommandHandler handler = new CommandHandler();
+        Map<String, StoredValue> storage = new HashMap<>();
+        List<byte[]> parts = new ArrayList<>();
+        parts.add("EXEC".getBytes(StandardCharsets.UTF_8));
+
+        byte[] response = handler.handleCommand(parts, storage);
+        assertEquals("-ERR EXEC without MULTI\r\n", new String(response, StandardCharsets.UTF_8));
+    }
 }
