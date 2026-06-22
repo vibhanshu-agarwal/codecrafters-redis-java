@@ -475,4 +475,18 @@ class CommandHandlerTest {
         byte[] response3 = handler.handleCommand(incr2Parts, storage);
         assertEquals(":11\r\n", new String(response3, StandardCharsets.UTF_8));
     }
+
+    /**
+     * Validates MULTI command returns OK response
+     */
+    @Test
+    void testHandleMultiCommand() {
+        CommandHandler handler = new CommandHandler();
+        Map<String, StoredValue> storage = new HashMap<>();
+        List<byte[]> parts = new ArrayList<>();
+        parts.add("MULTI".getBytes(StandardCharsets.UTF_8));
+
+        byte[] response = handler.handleCommand(parts, storage);
+        assertEquals("+OK\r\n", new String(response, StandardCharsets.UTF_8));
+    }
 }

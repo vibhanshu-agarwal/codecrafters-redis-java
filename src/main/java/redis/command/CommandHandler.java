@@ -29,6 +29,7 @@ public class CommandHandler {
     commands.put("XRANGE", new XRangeCommand());
     commands.put("XREAD", new XReadCommand());
     commands.put("INCR", new IncrCommand());
+    commands.put("MULTI", new MultiCommand());
   }
 
   /**
