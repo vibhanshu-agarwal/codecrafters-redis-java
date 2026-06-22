@@ -16,6 +16,7 @@ public class XReadCommand implements Command {
     int streamsIndex = -1;
     long blockTimeoutMs = -1;
 
+    // Extracts stream configuration and optional blocking parameters
     for (int i = 0; i < args.size(); i++) {
       String arg = new String(args.get(i), StandardCharsets.UTF_8);
       if ("STREAMS".equalsIgnoreCase(arg)) {

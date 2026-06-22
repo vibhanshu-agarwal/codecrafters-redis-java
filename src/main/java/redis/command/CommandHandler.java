@@ -28,6 +28,7 @@ public class CommandHandler {
     commands.put("XADD", new XAddCommand());
     commands.put("XRANGE", new XRangeCommand());
     commands.put("XREAD", new XReadCommand());
+    commands.put("INCR", new IncrCommand());
   }
 
   /**

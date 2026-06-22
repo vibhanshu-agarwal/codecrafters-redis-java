@@ -440,4 +440,39 @@ class CommandHandlerTest {
             "*2\r\n$2\r\ns1\r\n*1\r\n*2\r\n$3\r\n0-1\r\n*2\r\n$2\r\nf1\r\n$2\r\nv1\r\n";
         assertEquals(expected, new String(response, StandardCharsets.UTF_8));
     }
+
+    /**
+     * Validates INCR command increments numerical values and handles missing keys
+     */
+    @Test
+    void testHandleIncrCommand() {
+        CommandHandler handler = new CommandHandler();
+        Map<String, StoredValue> storage = new HashMap<>();
+
+        // INCR non-existing key
+        List<byte[]> incr1Parts = List.of(
+            "INCR".getBytes(StandardCharsets.UTF_8),
+            "foo".getBytes(StandardCharsets.UTF_8)
+        );
+        byte[] response1 = handler.handleCommand(incr1Parts, storage);
+        assertEquals(":1\r\n", new String(response1, StandardCharsets.UTF_8));
+
+        // INCR existing key
+        byte[] response2 = handler.handleCommand(incr1Parts, storage);
+        assertEquals(":2\r\n", new String(response2, StandardCharsets.UTF_8));
+
+        // SET then INCR
+        handler.handleCommand(List.of(
+            "SET".getBytes(StandardCharsets.UTF_8),
+            "bar".getBytes(StandardCharsets.UTF_8),
+            "10".getBytes(StandardCharsets.UTF_8)
+        ), storage);
+
+        List<byte[]> incr2Parts = List.of(
+            "INCR".getBytes(StandardCharsets.UTF_8),
+            "bar".getBytes(StandardCharsets.UTF_8)
+        );
+        byte[] response3 = handler.handleCommand(incr2Parts, storage);
+        assertEquals(":11\r\n", new String(response3, StandardCharsets.UTF_8));
+    }
 }
