@@ -503,4 +503,29 @@ class CommandHandlerTest {
         byte[] response = handler.handleCommand(parts, storage);
         assertEquals("-ERR EXEC without MULTI\r\n", new String(response, StandardCharsets.UTF_8));
     }
+
+    /**
+     * Validates empty transaction (MULTI followed immediately by EXEC)
+     */
+    @Test
+    void testHandleEmptyTransaction() {
+        CommandHandler handler = new CommandHandler();
+        Map<String, StoredValue> storage = new HashMap<>();
+        
+        // MULTI
+        List<byte[]> multiParts = new ArrayList<>();
+        multiParts.add("MULTI".getBytes(StandardCharsets.UTF_8));
+        byte[] multiResponse = handler.handleCommand(multiParts, storage);
+        assertEquals("+OK\r\n", new String(multiResponse, StandardCharsets.UTF_8));
+        
+        // EXEC
+        List<byte[]> execParts = new ArrayList<>();
+        execParts.add("EXEC".getBytes(StandardCharsets.UTF_8));
+        byte[] execResponse = handler.handleCommand(execParts, storage);
+        assertEquals("*0\r\n", new String(execResponse, StandardCharsets.UTF_8));
+        
+        // Next EXEC should fail
+        byte[] secondExecResponse = handler.handleCommand(execParts, storage);
+        assertEquals("-ERR EXEC without MULTI\r\n", new String(secondExecResponse, StandardCharsets.UTF_8));
+    }
 }

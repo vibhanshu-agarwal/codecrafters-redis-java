@@ -11,6 +11,7 @@ import java.util.Map;
 
 public class CommandHandler {
   private final Map<String, Command> commands = new HashMap<>();
+  private final TransactionState transactionState = new TransactionState();
 
   /** Registers supported commands with argument validation logic */
   public CommandHandler() {
@@ -29,8 +30,8 @@ public class CommandHandler {
     commands.put("XRANGE", new XRangeCommand());
     commands.put("XREAD", new XReadCommand());
     commands.put("INCR", new IncrCommand());
-    commands.put("MULTI", new MultiCommand());
-    commands.put("EXEC", new ExecCommand());
+    commands.put("MULTI", new MultiCommand(transactionState));
+    commands.put("EXEC", new ExecCommand(transactionState));
   }
 
   /**
