@@ -584,4 +584,61 @@ class CommandHandlerTest {
         // Verify key still does not exist
         assertNull(storage.get("foo"));
     }
+
+    /**
+     * Validates full transaction execution with multiple commands
+     */
+    @Test
+    void testHandleFullTransaction() {
+        CommandHandler handler = new CommandHandler();
+        Map<String, StoredValue> storage = new HashMap<>();
+
+        // MULTI
+        handler.handleCommand(List.of("MULTI".getBytes(StandardCharsets.UTF_8)), storage);
+
+        // SET foo 6
+        handler.handleCommand(List.of(
+                "SET".getBytes(StandardCharsets.UTF_8),
+                "foo".getBytes(StandardCharsets.UTF_8),
+                "6".getBytes(StandardCharsets.UTF_8)
+        ), storage);
+
+        // INCR foo
+        handler.handleCommand(List.of(
+                "INCR".getBytes(StandardCharsets.UTF_8),
+                "foo".getBytes(StandardCharsets.UTF_8)
+        ), storage);
+
+        // INCR bar
+        handler.handleCommand(List.of(
+                "INCR".getBytes(StandardCharsets.UTF_8),
+                "bar".getBytes(StandardCharsets.UTF_8)
+        ), storage);
+
+        // GET bar
+        handler.handleCommand(List.of(
+                "GET".getBytes(StandardCharsets.UTF_8),
+                "bar".getBytes(StandardCharsets.UTF_8)
+        ), storage);
+
+        // EXEC
+        byte[] execResponse = handler.handleCommand(List.of("EXEC".getBytes(StandardCharsets.UTF_8)), storage);
+        
+        // Expected response: [*4, +OK, :7, :1, $1\r\n1]
+        String expected = "*4\r\n+OK\r\n:7\r\n:1\r\n$1\r\n1\r\n";
+        assertEquals(expected, new String(execResponse, StandardCharsets.UTF_8));
+
+        // Verify final state
+        byte[] getFooResponse = handler.handleCommand(List.of(
+                "GET".getBytes(StandardCharsets.UTF_8),
+                "foo".getBytes(StandardCharsets.UTF_8)
+        ), storage);
+        assertEquals("$1\r\n7\r\n", new String(getFooResponse, StandardCharsets.UTF_8));
+
+        byte[] getBarResponse = handler.handleCommand(List.of(
+                "GET".getBytes(StandardCharsets.UTF_8),
+                "bar".getBytes(StandardCharsets.UTF_8)
+        ), storage);
+        assertEquals("$1\r\n1\r\n", new String(getBarResponse, StandardCharsets.UTF_8));
+    }
 }
