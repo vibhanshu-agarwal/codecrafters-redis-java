@@ -33,6 +33,7 @@ public class CommandHandler {
     commands.put("MULTI", new MultiCommand(transactionState));
     commands.put("EXEC", new ExecCommand(transactionState));
     commands.put("DISCARD", new DiscardCommand(transactionState));
+    commands.put("WATCH", new WatchCommand());
   }
 
   /**

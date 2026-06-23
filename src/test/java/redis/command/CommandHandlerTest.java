@@ -683,4 +683,19 @@ class CommandHandlerTest {
         byte[] response = handler.handleCommand(List.of("DISCARD".getBytes(StandardCharsets.UTF_8)), storage);
         assertEquals("-ERR DISCARD without MULTI\r\n", new String(response, StandardCharsets.UTF_8));
     }
+
+    /**
+     * Validates WATCH command returns OK response
+     */
+    @Test
+    void testHandleWatchCommand() {
+        CommandHandler handler = new CommandHandler();
+        Map<String, StoredValue> storage = new HashMap<>();
+        List<byte[]> parts = new ArrayList<>();
+        parts.add("WATCH".getBytes(StandardCharsets.UTF_8));
+        parts.add("key1".getBytes(StandardCharsets.UTF_8));
+
+        byte[] response = handler.handleCommand(parts, storage);
+        assertEquals("+OK\r\n", new String(response, StandardCharsets.UTF_8));
+    }
 }
