@@ -641,4 +641,46 @@ class CommandHandlerTest {
         ), storage);
         assertEquals("$1\r\n1\r\n", new String(getBarResponse, StandardCharsets.UTF_8));
     }
+
+    /**
+     * Validates DISCARD command clears the transaction queue and returns OK
+     */
+    @Test
+    void testHandleDiscardCommand() {
+        CommandHandler handler = new CommandHandler();
+        Map<String, StoredValue> storage = new HashMap<>();
+
+        // Start transaction
+        handler.handleCommand(List.of("MULTI".getBytes(StandardCharsets.UTF_8)), storage);
+
+        // Queue SET command
+        handler.handleCommand(List.of(
+                "SET".getBytes(StandardCharsets.UTF_8),
+                "foo".getBytes(StandardCharsets.UTF_8),
+                "41".getBytes(StandardCharsets.UTF_8)
+        ), storage);
+
+        // DISCARD
+        byte[] discardResponse = handler.handleCommand(List.of("DISCARD".getBytes(StandardCharsets.UTF_8)), storage);
+        assertEquals("+OK\r\n", new String(discardResponse, StandardCharsets.UTF_8));
+
+        // EXEC should now fail
+        byte[] execResponse = handler.handleCommand(List.of("EXEC".getBytes(StandardCharsets.UTF_8)), storage);
+        assertEquals("-ERR EXEC without MULTI\r\n", new String(execResponse, StandardCharsets.UTF_8));
+
+        // Verify key was not set
+        assertNull(storage.get("foo"));
+    }
+
+    /**
+     * Validates DISCARD without MULTI returns an error
+     */
+    @Test
+    void testHandleDiscardWithoutMulti() {
+        CommandHandler handler = new CommandHandler();
+        Map<String, StoredValue> storage = new HashMap<>();
+
+        byte[] response = handler.handleCommand(List.of("DISCARD".getBytes(StandardCharsets.UTF_8)), storage);
+        assertEquals("-ERR DISCARD without MULTI\r\n", new String(response, StandardCharsets.UTF_8));
+    }
 }
