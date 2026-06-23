@@ -698,4 +698,28 @@ class CommandHandlerTest {
         byte[] response = handler.handleCommand(parts, storage);
         assertEquals("+OK\r\n", new String(response, StandardCharsets.UTF_8));
     }
+
+    /**
+     * Validates that WATCH inside a transaction returns an error
+     */
+    @Test
+    void testHandleWatchInsideTransaction() {
+        CommandHandler handler = new CommandHandler();
+        Map<String, StoredValue> storage = new HashMap<>();
+
+        // Start transaction
+        handler.handleCommand(List.of("MULTI".getBytes(StandardCharsets.UTF_8)), storage);
+
+        // WATCH inside MULTI
+        List<byte[]> parts = new ArrayList<>();
+        parts.add("WATCH".getBytes(StandardCharsets.UTF_8));
+        parts.add("key1".getBytes(StandardCharsets.UTF_8));
+
+        byte[] response = handler.handleCommand(parts, storage);
+        String responseStr = new String(response, StandardCharsets.UTF_8);
+        assertTrue(responseStr.contains("ERR"), "Error should contain ERR");
+        assertTrue(responseStr.contains("WATCH"), "Error should contain WATCH");
+        assertTrue(responseStr.contains("inside MULTI"), "Error should contain inside MULTI");
+        assertTrue(responseStr.contains("not allowed"), "Error should contain not allowed");
+    }
 }

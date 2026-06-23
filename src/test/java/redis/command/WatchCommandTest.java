@@ -18,7 +18,7 @@ class WatchCommandTest {
      */
     @Test
     void testExecuteWatch() {
-        WatchCommand command = new WatchCommand();
+        WatchCommand command = new WatchCommand(new TransactionState());
         Map<String, StoredValue> storage = new HashMap<>();
         List<byte[]> args = new ArrayList<>();
         args.add("key1".getBytes(StandardCharsets.UTF_8));
@@ -32,7 +32,7 @@ class WatchCommandTest {
      */
     @Test
     void testExecuteWatchMultipleKeys() {
-        WatchCommand command = new WatchCommand();
+        WatchCommand command = new WatchCommand(new TransactionState());
         Map<String, StoredValue> storage = new HashMap<>();
         List<byte[]> args = new ArrayList<>();
         args.add("key1".getBytes(StandardCharsets.UTF_8));
@@ -47,7 +47,7 @@ class WatchCommandTest {
      */
     @Test
     void testExecuteWatchWrongNumberOfArguments() {
-        WatchCommand command = new WatchCommand();
+        WatchCommand command = new WatchCommand(new TransactionState());
         Map<String, StoredValue> storage = new HashMap<>();
         List<byte[]> args = new ArrayList<>();
 
