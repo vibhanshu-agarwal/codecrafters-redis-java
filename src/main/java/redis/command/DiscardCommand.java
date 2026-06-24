@@ -24,6 +24,7 @@ public class DiscardCommand implements Command {
             return RespResponse.error("DISCARD without MULTI");
         }
         transactionState.setInTransaction(false);
+        transactionState.clearWatchedKeys();
         return RespResponse.simpleString("OK");
     }
 }

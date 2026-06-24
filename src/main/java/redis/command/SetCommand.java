@@ -42,6 +42,7 @@ public class SetCommand implements Command {
       keyValuePairs.put(key, new RedisString(args.get(1)));
     }
 
+    BlockingCommandCoordinator.signalKeyChanged(key);
     return RespResponse.simpleString("OK");
   }
 }

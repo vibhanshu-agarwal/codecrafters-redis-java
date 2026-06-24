@@ -163,6 +163,7 @@ public final class BlockingCommandCoordinator {
   public static void signalKeyChanged(String key) {
     LOCK.lock();
     try {
+      redis.storage.KeyModificationTracker.notifyModified(key);
       signalNext(key);
     } finally {
       LOCK.unlock();

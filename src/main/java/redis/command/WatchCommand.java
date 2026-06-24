@@ -25,7 +25,8 @@ public class WatchCommand implements Command {
     }
 
     for (byte[] arg : args) {
-      transactionState.watchKey(new String(arg, StandardCharsets.UTF_8));
+      String key = new String(arg, StandardCharsets.UTF_8);
+      transactionState.watchKey(key, redis.storage.KeyModificationTracker.getVersion(key));
     }
 
     return RespResponse.simpleString("OK");

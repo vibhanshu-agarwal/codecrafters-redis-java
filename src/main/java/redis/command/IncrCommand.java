@@ -34,6 +34,7 @@ public class IncrCommand implements Command {
 
     keyValuePairs.put(key, new RedisString(String.valueOf(value).getBytes(StandardCharsets.UTF_8)));
 
+    BlockingCommandCoordinator.signalKeyChanged(key);
     return RespResponse.integer(value);
   }
 }

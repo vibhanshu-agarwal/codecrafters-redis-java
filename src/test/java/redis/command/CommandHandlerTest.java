@@ -722,4 +722,76 @@ class CommandHandlerTest {
         assertTrue(responseStr.contains("inside MULTI"), "Error should contain inside MULTI");
         assertTrue(responseStr.contains("not allowed"), "Error should contain not allowed");
     }
+
+    /**
+     * Validates that EXEC fails if a watched key is modified by another client
+     */
+    @Test
+    void testWatchKeyFailure() {
+        CommandHandler handler1 = new CommandHandler();
+        CommandHandler handler2 = new CommandHandler();
+        Map<String, StoredValue> storage = new HashMap<>();
+
+        // handler1 watches 'foo'
+        handler1.handleCommand(List.of(
+                "WATCH".getBytes(StandardCharsets.UTF_8),
+                "foo".getBytes(StandardCharsets.UTF_8)
+        ), storage);
+
+        // handler1 starts MULTI
+        handler1.handleCommand(List.of("MULTI".getBytes(StandardCharsets.UTF_8)), storage);
+
+        // handler1 queues SET bar 1
+        handler1.handleCommand(List.of(
+                "SET".getBytes(StandardCharsets.UTF_8),
+                "bar".getBytes(StandardCharsets.UTF_8),
+                "1".getBytes(StandardCharsets.UTF_8)
+        ), storage);
+
+        // handler2 modifies 'foo'
+        handler2.handleCommand(List.of(
+                "SET".getBytes(StandardCharsets.UTF_8),
+                "foo".getBytes(StandardCharsets.UTF_8),
+                "modified".getBytes(StandardCharsets.UTF_8)
+        ), storage);
+
+        // handler1 executes EXEC
+        byte[] response = handler1.handleCommand(List.of("EXEC".getBytes(StandardCharsets.UTF_8)), storage);
+        assertEquals("*-1\r\n", new String(response, StandardCharsets.UTF_8));
+
+        // Verify bar was NOT set
+        assertNull(storage.get("bar"));
+    }
+
+    /**
+     * Validates that EXEC succeeds if a watched key is NOT modified
+     */
+    @Test
+    void testWatchKeySuccess() {
+        CommandHandler handler = new CommandHandler();
+        Map<String, StoredValue> storage = new HashMap<>();
+
+        // WATCH 'foo'
+        handler.handleCommand(List.of(
+                "WATCH".getBytes(StandardCharsets.UTF_8),
+                "foo".getBytes(StandardCharsets.UTF_8)
+        ), storage);
+
+        // MULTI
+        handler.handleCommand(List.of("MULTI".getBytes(StandardCharsets.UTF_8)), storage);
+
+        // SET bar 1
+        handler.handleCommand(List.of(
+                "SET".getBytes(StandardCharsets.UTF_8),
+                "bar".getBytes(StandardCharsets.UTF_8),
+                "1".getBytes(StandardCharsets.UTF_8)
+        ), storage);
+
+        // EXEC
+        byte[] response = handler.handleCommand(List.of("EXEC".getBytes(StandardCharsets.UTF_8)), storage);
+        assertEquals("*1\r\n+OK\r\n", new String(response, StandardCharsets.UTF_8));
+
+        // Verify bar was set
+        assertNotNull(storage.get("bar"));
+    }
 }

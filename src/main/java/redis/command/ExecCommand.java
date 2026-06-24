@@ -21,7 +21,14 @@ public class ExecCommand implements Command {
             return RespResponse.error("EXEC without MULTI");
         }
 
-        // 2. Execute all queued commands and collect their responses
+        // 2. Check if watched keys have been modified
+        if (transactionState.isWatchedKeyModified()) {
+            transactionState.setInTransaction(false);
+            transactionState.clearWatchedKeys();
+            return RespResponse.nullArray();
+        }
+
+        // 3. Execute all queued commands and collect their responses
         List<byte[]> responses = new ArrayList<>();
         for(TransactionState.QueuedCommand commandQueue : transactionState.getCommandQueue()) {
             // Execute each command against the shared keyValuePairs map
@@ -29,10 +36,11 @@ public class ExecCommand implements Command {
             responses.add(response);
         }
 
-        // 3. Reset the transaction state (clears the queue and sets inTransaction to false)
+        // 4. Reset the transaction state (clears the queue and sets inTransaction to false)
         transactionState.setInTransaction(false);
+        transactionState.clearWatchedKeys();
 
-        // 4. Return the responses as a RESP array
+        // 5. Return the responses as a RESP array
         // We use marshalledArray because the individual responses are already RESP-encoded byte arrays
         return RespResponse.marshalledArray(responses);
     }

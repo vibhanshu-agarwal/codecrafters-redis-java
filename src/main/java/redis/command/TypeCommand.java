@@ -25,6 +25,7 @@ public class TypeCommand implements Command {
 
     if (storedValue.isExpired()) {
       keyValuePairs.remove(key);
+      BlockingCommandCoordinator.signalKeyChanged(key);
       return RespResponse.none();
     }
 

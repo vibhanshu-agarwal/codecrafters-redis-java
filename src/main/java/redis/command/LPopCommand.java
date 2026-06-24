@@ -31,7 +31,9 @@ public class LPopCommand implements Command {
     RedisList list = (RedisList) existingValue;
 
     if (args.size() == 1) {
-      return RespResponse.bulkString(list.lpop());
+      byte[] popped = list.lpop();
+      BlockingCommandCoordinator.signalKeyChanged(key);
+      return RespResponse.bulkString(popped);
     }
 
     int count;
@@ -52,6 +54,10 @@ public class LPopCommand implements Command {
         break;
       }
       poppedElements.add(element);
+    }
+
+    if (!poppedElements.isEmpty()) {
+      BlockingCommandCoordinator.signalKeyChanged(key);
     }
 
     return RespResponse.array(poppedElements);

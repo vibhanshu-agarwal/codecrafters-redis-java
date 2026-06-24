@@ -61,6 +61,8 @@ public class BLPopCommand implements Command {
       return null;
     }
 
+    redis.storage.KeyModificationTracker.notifyModified(key);
+
     /*
      * BLPOP returns a two-item array containing the list key and the popped value. This differs
      * from LPOP, which returns only the popped value.

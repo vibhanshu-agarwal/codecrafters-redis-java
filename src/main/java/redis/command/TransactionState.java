@@ -1,14 +1,15 @@
 package redis.command;
 
 import java.util.ArrayList;
-import java.util.HashSet;
+import java.util.HashMap;
 import java.util.List;
-import java.util.Set;
+import java.util.Map;
+import redis.storage.KeyModificationTracker;
 
 public class TransactionState {
     private boolean inTransaction = false;
     private final List<QueuedCommand> commandQueue = new ArrayList<>();
-    private final Set<String> watchedKeys = new HashSet<>();
+    private final Map<String, Long> watchedKeyVersions = new HashMap<>();
 
     public boolean isInTransaction() {
         return inTransaction;
@@ -29,16 +30,21 @@ public class TransactionState {
         return commandQueue;
     }
 
-    public void watchKey(String key) {
-        watchedKeys.add(key);
+    public void watchKey(String key, long version) {
+        watchedKeyVersions.put(key, version);
     }
 
-    public Set<String> getWatchedKeys() {
-        return watchedKeys;
+    public boolean isWatchedKeyModified() {
+        for (Map.Entry<String, Long> entry : watchedKeyVersions.entrySet()) {
+            if (KeyModificationTracker.getVersion(entry.getKey()) != entry.getValue()) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public void clearWatchedKeys() {
-        watchedKeys.clear();
+        watchedKeyVersions.clear();
     }
 
     public record QueuedCommand(Command command, List<byte[]> args) {}

@@ -21,6 +21,7 @@ public class GetCommand implements Command {
         if (value == null || value.isExpired()) {
             if (value != null) {
                 keyValuePairs.remove(key);
+                BlockingCommandCoordinator.signalKeyChanged(key);
             }
             return RespResponse.nullBulkString();
         }
