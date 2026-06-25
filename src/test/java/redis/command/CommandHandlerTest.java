@@ -794,4 +794,64 @@ class CommandHandlerTest {
         // Verify bar was set
         assertNotNull(storage.get("bar"));
     }
+
+    /**
+     * Validates UNWATCH command returns OK response
+     */
+    @Test
+    void testHandleUnWatchCommand() {
+        CommandHandler handler = new CommandHandler();
+        Map<String, StoredValue> storage = new HashMap<>();
+        List<byte[]> parts = new ArrayList<>();
+        parts.add("UNWATCH".getBytes(StandardCharsets.UTF_8));
+
+        byte[] response = handler.handleCommand(parts, storage);
+        assertEquals("+OK\r\n", new String(response, StandardCharsets.UTF_8));
+    }
+
+    /**
+     * Validates that UNWATCH clears watched keys and allows EXEC to succeed
+     * even if a previously watched key was modified.
+     */
+    @Test
+    void testUnWatchPreventsExecFailure() {
+        CommandHandler handler1 = new CommandHandler();
+        CommandHandler handler2 = new CommandHandler();
+        Map<String, StoredValue> storage = new HashMap<>();
+
+        // handler1 watches 'foo'
+        handler1.handleCommand(List.of(
+                "WATCH".getBytes(StandardCharsets.UTF_8),
+                "foo".getBytes(StandardCharsets.UTF_8)
+        ), storage);
+
+        // handler1 unwatches 'foo'
+        handler1.handleCommand(List.of("UNWATCH".getBytes(StandardCharsets.UTF_8)), storage);
+
+        // handler2 modifies 'foo'
+        handler2.handleCommand(List.of(
+                "SET".getBytes(StandardCharsets.UTF_8),
+                "foo".getBytes(StandardCharsets.UTF_8),
+                "modified".getBytes(StandardCharsets.UTF_8)
+        ), storage);
+
+        // handler1 starts MULTI
+        handler1.handleCommand(List.of("MULTI".getBytes(StandardCharsets.UTF_8)), storage);
+
+        // handler1 queues SET bar 1
+        handler1.handleCommand(List.of(
+                "SET".getBytes(StandardCharsets.UTF_8),
+                "bar".getBytes(StandardCharsets.UTF_8),
+                "1".getBytes(StandardCharsets.UTF_8)
+        ), storage);
+
+        // handler1 executes EXEC
+        byte[] response = handler1.handleCommand(List.of("EXEC".getBytes(StandardCharsets.UTF_8)), storage);
+        
+        // Should succeed because of UNWATCH
+        assertEquals("*1\r\n+OK\r\n", new String(response, StandardCharsets.UTF_8));
+
+        // Verify bar WAS set
+        assertNotNull(storage.get("bar"));
+    }
 }
