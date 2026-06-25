@@ -34,6 +34,7 @@ public class CommandHandler {
     commands.put("EXEC", new ExecCommand(transactionState));
     commands.put("DISCARD", new DiscardCommand(transactionState));
     commands.put("WATCH", new WatchCommand(transactionState));
+    commands.put("UNWATCH", new UnWatchCommand(transactionState));
   }
 
   /**
@@ -67,6 +68,10 @@ public class CommandHandler {
   }
 
   private boolean isTransactionControlCommand(String cmdName) {
-    return cmdName.equals("EXEC") || cmdName.equals("MULTI") || cmdName.equals("DISCARD") || cmdName.equals("WATCH");
+    return cmdName.equals("EXEC")
+        || cmdName.equals("MULTI")
+        || cmdName.equals("DISCARD")
+        || cmdName.equals("WATCH")
+        || cmdName.equals("UNWATCH");
   }
 }
