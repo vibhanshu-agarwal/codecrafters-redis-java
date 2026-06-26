@@ -1,16 +1,12 @@
-import redis.protocol.RespResponse;
-import redis.server.ClientHandler;
-import redis.server.ServerConfig;
-import redis.storage.StoredValue;
-
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.net.UnknownHostException;
-import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import redis.server.ClientHandler;
+import redis.server.ReplicationHandshakeHandler;
+import redis.server.ServerConfig;
+import redis.storage.StoredValue;
 
 public class Main {
 
@@ -39,16 +35,7 @@ public class Main {
 
     ServerConfig serverConfig = new ServerConfig(port, replicaOf);
 
-    if (serverConfig.isReplica()) {
-
-      try (Socket replicaSocket =
-          new Socket(serverConfig.getReplicaHost(), serverConfig.getReplicaPort())) {
-        //              send the PING command encoded as a RESP array: *1\r\n$4\r\nPING\r\n.
-        replicaSocket.getOutputStream().write(RespResponse.array(List.of("PING".getBytes())));
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-    }
+    new ReplicationHandshakeHandler(serverConfig).run();
 
     try (ServerSocket serverSocket = new ServerSocket(port)) {
 

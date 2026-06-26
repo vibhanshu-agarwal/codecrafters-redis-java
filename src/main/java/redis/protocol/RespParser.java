@@ -34,7 +34,7 @@ public class RespParser {
     }
 
     if (type != '*') {
-      throw new IOException("Expected RESP array");
+      throw new IOException("Expected RESP array, got " + (char) type);
     }
 
     // If String starts with *3\r\n - 3 is the number of elements in the array
@@ -66,6 +66,20 @@ public class RespParser {
     }
 
     return parts;
+  }
+
+  /**
+   * Parses RESP simple string; validates prefix and extracts content
+   */
+  public String readSimpleString() throws IOException {
+    int type = input.read();
+    if (type == -1) {
+      return null;
+    }
+    if (type != '+') {
+      throw new IOException("Expected RESP simple string, got " + (char) type);
+    }
+    return readLine();
   }
 
   /**

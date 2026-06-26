@@ -886,4 +886,20 @@ class CommandHandlerTest {
         byte[] response = handler.handleCommand(parts, storage);
         assertTrue(new String(response, StandardCharsets.UTF_8).contains("role:slave"));
     }
+
+    /**
+     * Validates REPLCONF command returns OK response
+     */
+    @Test
+    void testHandleReplConfCommand() {
+        CommandHandler handler = new CommandHandler(serverConfig);
+        Map<String, StoredValue> storage = new HashMap<>();
+        List<byte[]> parts = new ArrayList<>();
+        parts.add("REPLCONF".getBytes(StandardCharsets.UTF_8));
+        parts.add("listening-port".getBytes(StandardCharsets.UTF_8));
+        parts.add("6380".getBytes(StandardCharsets.UTF_8));
+
+        byte[] response = handler.handleCommand(parts, storage);
+        assertEquals("+OK\r\n", new String(response, StandardCharsets.UTF_8));
+    }
 }

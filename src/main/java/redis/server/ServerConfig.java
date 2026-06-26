@@ -24,4 +24,8 @@ public class ServerConfig {
   public int getReplicaPort() {
     return Integer.parseInt(replicaOf.split(" ")[1]);
   }
+
+  public int getPort() {
+    return port;
+  }
 }
