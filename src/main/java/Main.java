@@ -1,4 +1,5 @@
 import redis.server.ClientHandler;
+import redis.server.ServerConfig;
 import redis.storage.StoredValue;
 
 import java.io.IOException;
@@ -17,11 +18,18 @@ public class Main {
     System.out.println("Logs from your program will appear here!");
 
     int port = 6379;
+    String replicaOf = null;
     for (int i = 0; i < args.length; i++) {
       if ("--port".equals(args[i]) && i + 1 < args.length) {
         port = Integer.parseInt(args[i + 1]);
       }
+      //Parse --replicaof flag (value is "<host> <port>") alongside --port.
+      if ("--replicaof".equals(args[i]) && i + 2 < args.length) {
+        replicaOf = args[i + 1] + " " + args[i + 2];
+      }
     }
+
+    ServerConfig serverConfig = new ServerConfig(port, replicaOf);
 
     try (ServerSocket serverSocket = new ServerSocket(port)) {
 
@@ -31,7 +39,7 @@ public class Main {
       // Wait for connection from client.
       while (true) {
         Socket clientSocket = serverSocket.accept();
-        Thread.startVirtualThread(() -> handleClient(clientSocket, keyValuePairs));
+        Thread.startVirtualThread(() -> handleClient(clientSocket, serverConfig, keyValuePairs));
       }
     } catch (IOException e) {
       // Add a sout
@@ -39,7 +47,7 @@ public class Main {
     }
   }
 
-  private static void handleClient(Socket clientSocket, Map<String, StoredValue> keyValuePairs) {
-    new ClientHandler(clientSocket, keyValuePairs).handle();
+  private static void handleClient(Socket clientSocket, ServerConfig serverConfig, Map<String, StoredValue> keyValuePairs) {
+    new ClientHandler(clientSocket, serverConfig, keyValuePairs).handle();
   }
 }

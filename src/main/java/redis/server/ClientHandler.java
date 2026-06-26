@@ -1,20 +1,20 @@
 package redis.server;
 
+import java.net.Socket;
+import java.util.List;
+import java.util.Map;
 import redis.command.CommandHandler;
 import redis.protocol.RespParser;
 import redis.storage.StoredValue;
 
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.util.List;
-import java.util.Map;
-
 public class ClientHandler {
     private final Socket clientSocket;
     private final Map<String, StoredValue> keyValuePairs;
+    private final ServerConfig serverConfig;
 
-    public ClientHandler(Socket clientSocket, Map<String, StoredValue> keyValuePairs) {
+    public ClientHandler(Socket clientSocket, ServerConfig serverConfig, Map<String, StoredValue> keyValuePairs) {
         this.clientSocket = clientSocket;
+        this.serverConfig = serverConfig;
         this.keyValuePairs = keyValuePairs;
     }
 
@@ -39,7 +39,7 @@ public class ClientHandler {
     public void handle() {
         try (clientSocket; var inputStream = clientSocket.getInputStream(); var outputStream = clientSocket.getOutputStream()) {
             RespParser parser = new RespParser(inputStream);
-            CommandHandler commandHandler = new CommandHandler();
+            CommandHandler commandHandler = new CommandHandler(serverConfig);
 
             List<byte[]> command;
             while ((command = parser.readCommand()) != null) {

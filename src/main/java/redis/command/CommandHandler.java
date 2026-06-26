@@ -1,6 +1,7 @@
 package redis.command;
 
 import redis.protocol.RespResponse;
+import redis.server.ServerConfig;
 import redis.storage.StoredValue;
 
 import java.nio.charset.StandardCharsets;
@@ -14,7 +15,7 @@ public class CommandHandler {
   private final TransactionState transactionState = new TransactionState();
 
   /** Registers supported commands with argument validation logic */
-  public CommandHandler() {
+  public CommandHandler(ServerConfig serverConfig) {
     commands.put("PING", new PingCommand());
     commands.put("ECHO", new EchoCommand());
     commands.put("SET", new SetCommand());
@@ -35,7 +36,7 @@ public class CommandHandler {
     commands.put("DISCARD", new DiscardCommand(transactionState));
     commands.put("WATCH", new WatchCommand(transactionState));
     commands.put("UNWATCH", new UnWatchCommand(transactionState));
-    commands.put("INFO", new InfoCommand());
+    commands.put("INFO", new InfoCommand(serverConfig));
   }
 
   /**
