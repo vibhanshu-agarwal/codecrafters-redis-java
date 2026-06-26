@@ -24,8 +24,12 @@ public class Main {
         port = Integer.parseInt(args[i + 1]);
       }
       //Parse --replicaof flag (value is "<host> <port>") alongside --port.
-      if ("--replicaof".equals(args[i]) && i + 2 < args.length) {
-        replicaOf = args[i + 1] + " " + args[i + 2];
+      if ("--replicaof".equals(args[i]) && i + 1 < args.length) {
+        if (i + 2 < args.length && !args[i + 2].startsWith("--")) {
+          replicaOf = args[i + 1] + " " + args[i + 2];
+        } else {
+          replicaOf = args[i + 1];
+        }
       }
     }
 
