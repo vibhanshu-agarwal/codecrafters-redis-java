@@ -10,6 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class InfoCommandTest {
 
@@ -22,7 +23,10 @@ class InfoCommandTest {
         Map<String, StoredValue> storage = new HashMap<>();
 
         byte[] response = command.execute(Collections.emptyList(), storage);
-        assertEquals("$11\r\nrole:master\r\n", new String(response, StandardCharsets.UTF_8));
+        String responseStr = new String(response, StandardCharsets.UTF_8);
+        assertTrue(responseStr.contains("role:master"));
+        assertTrue(responseStr.contains("master_replid:8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"));
+        assertTrue(responseStr.contains("master_repl_offset:0"));
     }
 
     /**
@@ -34,6 +38,9 @@ class InfoCommandTest {
         Map<String, StoredValue> storage = new HashMap<>();
 
         byte[] response = command.execute(Collections.emptyList(), storage);
-        assertEquals("$10\r\nrole:slave\r\n", new String(response, StandardCharsets.UTF_8));
+        String responseStr = new String(response, StandardCharsets.UTF_8);
+        assertTrue(responseStr.contains("role:slave"));
+        assertTrue(responseStr.contains("master_replid:8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb"));
+        assertTrue(responseStr.contains("master_repl_offset:0"));
     }
 }
