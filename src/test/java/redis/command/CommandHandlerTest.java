@@ -902,4 +902,20 @@ class CommandHandlerTest {
         byte[] response = handler.handleCommand(parts, storage);
         assertEquals("+OK\r\n", new String(response, StandardCharsets.UTF_8));
     }
+
+    /**
+     * Validates PSYNC command returns FULLRESYNC response
+     */
+    @Test
+    void testHandlePsyncCommand() {
+        CommandHandler handler = new CommandHandler(serverConfig);
+        Map<String, StoredValue> storage = new HashMap<>();
+        List<byte[]> parts = new ArrayList<>();
+        parts.add("PSYNC".getBytes(StandardCharsets.UTF_8));
+        parts.add("?".getBytes(StandardCharsets.UTF_8));
+        parts.add("-1".getBytes(StandardCharsets.UTF_8));
+
+        byte[] response = handler.handleCommand(parts, storage);
+        assertEquals("+FULLRESYNC 8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb 0\r\n", new String(response, StandardCharsets.UTF_8));
+    }
 }

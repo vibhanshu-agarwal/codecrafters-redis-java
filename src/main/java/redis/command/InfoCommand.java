@@ -18,8 +18,8 @@ public class InfoCommand implements Command{
     public byte[] execute(List<byte[]> args, Map<String, StoredValue> keyValuePairs) {
         String role = serverConfig.isReplica() ? "slave" : "master";
         String body = "role:" + role + "\r\n"
-                + "master_replid:8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb\r\n"
-                + "master_repl_offset:0";
+                + "master_replid:" + serverConfig.getMasterReplid() + "\r\n"
+                + "master_repl_offset:" + serverConfig.getMasterReplOffset();
         return RespResponse.bulkString(body);
     }
 }

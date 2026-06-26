@@ -24,7 +24,7 @@ class ReplicationHandshakeTest {
         ReplicationHandshakeHandler handler = new ReplicationHandshakeHandler(config);
 
         // Prepare mock responses from master
-        String responses = "+PONG\r\n+OK\r\n+OK\r\n";
+        String responses = "+PONG\r\n+OK\r\n+OK\r\n+FULLRESYNC 8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb 0\r\n";
         InputStream inputStream = new ByteArrayInputStream(responses.getBytes(StandardCharsets.UTF_8));
         ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
 
@@ -69,5 +69,12 @@ class ReplicationHandshakeTest {
         assertEquals("REPLCONF", new String(replConf2.get(0), StandardCharsets.UTF_8));
         assertEquals("capa", new String(replConf2.get(1), StandardCharsets.UTF_8));
         assertEquals("psync2", new String(replConf2.get(2), StandardCharsets.UTF_8));
+
+        // Step 4: PSYNC ? -1
+        List<byte[]> psyncCmd = parser.readCommand();
+        assertEquals(3, psyncCmd.size());
+        assertEquals("PSYNC", new String(psyncCmd.get(0), StandardCharsets.UTF_8));
+        assertEquals("?", new String(psyncCmd.get(1), StandardCharsets.UTF_8));
+        assertEquals("-1", new String(psyncCmd.get(2), StandardCharsets.UTF_8));
     }
 }

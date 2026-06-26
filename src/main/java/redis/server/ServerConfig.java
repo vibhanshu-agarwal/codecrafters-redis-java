@@ -7,6 +7,9 @@ public class ServerConfig {
 
   private final String replicaOf;
 
+  private final String masterReplid = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb";
+  private final int masterReplOffset = 0;
+
   public ServerConfig(int port, String replicaOf) {
     this.port = port;
     this.replicaOf = replicaOf;
@@ -27,5 +30,13 @@ public class ServerConfig {
 
   public int getPort() {
     return port;
+  }
+
+  public String getMasterReplid() {
+    return masterReplid;
+  }
+
+  public int getMasterReplOffset() {
+    return masterReplOffset;
   }
 }

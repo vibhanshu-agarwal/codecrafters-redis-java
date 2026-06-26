@@ -50,5 +50,11 @@ public class ReplicationHandshakeHandler {
                 RespResponse.array(
                         List.of("REPLCONF".getBytes(), "capa".getBytes(), "psync2".getBytes())));
         respParser.readSimpleString();
+
+        // Step 4: Send PSYNC ? -1
+        outputStream.write(
+                RespResponse.array(
+                        List.of("PSYNC".getBytes(), "?".getBytes(), "-1".getBytes())));
+        respParser.readSimpleString();
     }
 }
