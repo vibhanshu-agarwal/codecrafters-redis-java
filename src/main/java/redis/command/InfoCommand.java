@@ -1,0 +1,16 @@
+package redis.command;
+
+import redis.protocol.RespResponse;
+import redis.storage.StoredValue;
+
+import java.util.List;
+import java.util.Map;
+
+public class InfoCommand implements Command{
+    @Override
+    public byte[] execute(List<byte[]> args, Map<String, StoredValue> keyValuePairs) {
+        //Assuming args[0] is replication for now
+        String body = "role:master";
+        return RespResponse.bulkString(body);
+    }
+}

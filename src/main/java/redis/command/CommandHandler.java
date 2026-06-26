@@ -35,6 +35,7 @@ public class CommandHandler {
     commands.put("DISCARD", new DiscardCommand(transactionState));
     commands.put("WATCH", new WatchCommand(transactionState));
     commands.put("UNWATCH", new UnWatchCommand(transactionState));
+    commands.put("INFO", new InfoCommand());
   }
 
   /**
