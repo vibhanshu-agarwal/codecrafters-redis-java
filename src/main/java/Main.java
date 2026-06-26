@@ -1,3 +1,4 @@
+import redis.protocol.RespResponse;
 import redis.server.ClientHandler;
 import redis.server.ServerConfig;
 import redis.storage.StoredValue;
@@ -5,6 +6,9 @@ import redis.storage.StoredValue;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.UnknownHostException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
@@ -23,7 +27,7 @@ public class Main {
       if ("--port".equals(args[i]) && i + 1 < args.length) {
         port = Integer.parseInt(args[i + 1]);
       }
-      //Parse --replicaof flag (value is "<host> <port>") alongside --port.
+      // Parse --replicaof flag (value is "<host> <port>") alongside --port.
       if ("--replicaof".equals(args[i]) && i + 1 < args.length) {
         if (i + 2 < args.length && !args[i + 2].startsWith("--")) {
           replicaOf = args[i + 1] + " " + args[i + 2];
@@ -34,6 +38,17 @@ public class Main {
     }
 
     ServerConfig serverConfig = new ServerConfig(port, replicaOf);
+
+    if (serverConfig.isReplica()) {
+
+      try (Socket replicaSocket =
+          new Socket(serverConfig.getReplicaHost(), serverConfig.getReplicaPort())) {
+        //              send the PING command encoded as a RESP array: *1\r\n$4\r\nPING\r\n.
+        replicaSocket.getOutputStream().write(RespResponse.array(List.of("PING".getBytes())));
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
 
     try (ServerSocket serverSocket = new ServerSocket(port)) {
 
@@ -51,7 +66,8 @@ public class Main {
     }
   }
 
-  private static void handleClient(Socket clientSocket, ServerConfig serverConfig, Map<String, StoredValue> keyValuePairs) {
+  private static void handleClient(
+      Socket clientSocket, ServerConfig serverConfig, Map<String, StoredValue> keyValuePairs) {
     new ClientHandler(clientSocket, serverConfig, keyValuePairs).handle();
   }
 }
