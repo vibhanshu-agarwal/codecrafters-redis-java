@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import redis.server.ClientHandler;
 import redis.server.ReplicationHandshakeHandler;
+import redis.server.ReplicationService;
 import redis.server.ServerConfig;
 import redis.storage.StoredValue;
 
@@ -34,8 +35,9 @@ public class Main {
     }
 
     ServerConfig serverConfig = new ServerConfig(port, replicaOf);
+    ReplicationService replicationService = new ReplicationService();
 
-    new ReplicationHandshakeHandler(serverConfig).run();
+    new ReplicationHandshakeHandler(serverConfig, keyValuePairs).run();
 
     try (ServerSocket serverSocket = new ServerSocket(port)) {
 
@@ -45,7 +47,7 @@ public class Main {
       // Wait for connection from client.
       while (true) {
         Socket clientSocket = serverSocket.accept();
-        Thread.startVirtualThread(() -> handleClient(clientSocket, serverConfig, keyValuePairs));
+        Thread.startVirtualThread(() -> handleClient(clientSocket, serverConfig, keyValuePairs, replicationService));
       }
     } catch (IOException e) {
       // Add a sout
@@ -54,7 +56,7 @@ public class Main {
   }
 
   private static void handleClient(
-      Socket clientSocket, ServerConfig serverConfig, Map<String, StoredValue> keyValuePairs) {
-    new ClientHandler(clientSocket, serverConfig, keyValuePairs).handle();
+      Socket clientSocket, ServerConfig serverConfig, Map<String, StoredValue> keyValuePairs, ReplicationService replicationService) {
+    new ClientHandler(clientSocket, serverConfig, keyValuePairs, replicationService).handle();
   }
 }

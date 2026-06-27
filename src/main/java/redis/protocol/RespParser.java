@@ -82,6 +82,22 @@ public class RespParser {
     return readLine();
   }
 
+  public byte[] readRdbFile() throws IOException {
+    int type = input.read();
+    if (type == -1) {
+      return null;
+    }
+    if (type != '$') {
+      throw new IOException("Expected '$' for RDB file, got " + (char) type);
+    }
+    int length = Integer.parseInt(readLine());
+    byte[] data = input.readNBytes(length);
+    if (data.length != length) {
+      throw new IOException("Unexpected end of stream while reading RDB file");
+    }
+    return data;
+  }
+
   /**
    * Reads a single line from the input stream, terminating at a Carriage Return (CR) followed by a
    * Line Feed (LF). The resulting line excludes the CRLF sequence.

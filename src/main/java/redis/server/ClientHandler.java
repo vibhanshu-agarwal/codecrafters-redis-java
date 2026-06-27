@@ -1,21 +1,28 @@
 package redis.server;
 
-import java.net.Socket;
-import java.util.List;
-import java.util.Map;
+import redis.command.BlockingCommandCoordinator;
 import redis.command.CommandHandler;
 import redis.protocol.RespParser;
+import redis.protocol.RespResponse;
 import redis.storage.StoredValue;
+
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 public class ClientHandler {
     private final Socket clientSocket;
     private final Map<String, StoredValue> keyValuePairs;
     private final ServerConfig serverConfig;
+    private final ReplicationService replicationService;
 
-    public ClientHandler(Socket clientSocket, ServerConfig serverConfig, Map<String, StoredValue> keyValuePairs) {
+    public ClientHandler(Socket clientSocket, ServerConfig serverConfig, Map<String, StoredValue> keyValuePairs, ReplicationService replicationService) {
         this.clientSocket = clientSocket;
         this.serverConfig = serverConfig;
         this.keyValuePairs = keyValuePairs;
+        this.replicationService = replicationService;
     }
 
     /**
@@ -43,8 +50,24 @@ public class ClientHandler {
 
             List<byte[]> command;
             while ((command = parser.readCommand()) != null) {
+                String cmdName = new String(command.getFirst(), StandardCharsets.UTF_8).toUpperCase(Locale.ROOT);
                 byte[] response = commandHandler.handleCommand(command, keyValuePairs);
-                outputStream.write(response);
+                
+                BlockingCommandCoordinator.lock().lock();
+                try {
+                    outputStream.write(response);
+                    outputStream.flush();
+                } finally {
+                    BlockingCommandCoordinator.lock().unlock();
+                }
+
+                if (cmdName.equals("PSYNC")) {
+                    replicationService.addReplica(outputStream);
+                }
+
+                if (replicationService.isWriteCommand(cmdName) && !serverConfig.isReplica()) {
+                    replicationService.propagate(RespResponse.array(command));
+                }
             }
         } catch (Exception e) {
             System.out.println("Client handler error: " + e.getMessage());
