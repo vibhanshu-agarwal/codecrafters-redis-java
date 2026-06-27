@@ -916,6 +916,12 @@ class CommandHandlerTest {
         parts.add("-1".getBytes(StandardCharsets.UTF_8));
 
         byte[] response = handler.handleCommand(parts, storage);
-        assertEquals("+FULLRESYNC 8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb 0\r\n", new String(response, StandardCharsets.UTF_8));
+        String responseStr = new String(response, StandardCharsets.UTF_8);
+        String expectedPrefix = "+FULLRESYNC 8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb 0\r\n";
+        assertTrue(responseStr.startsWith(expectedPrefix));
+
+        byte[] rdbPart = java.util.Arrays.copyOfRange(response, expectedPrefix.length(), response.length);
+        assertTrue(rdbPart.length > 0);
+        assertEquals('$', rdbPart[0]);
     }
 }

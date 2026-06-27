@@ -54,4 +54,11 @@ class RespResponseTest {
         byte[] response = RespResponse.nullArray();
         assertEquals("*-1\r\n", new String(response, StandardCharsets.UTF_8));
     }
+    
+    @Test
+    void testRdbFile() {
+        byte[] data = "REDIS".getBytes(StandardCharsets.UTF_8);
+        byte[] response = RespResponse.rdbFile(data);
+        assertEquals("$5\r\nREDIS", new String(response, StandardCharsets.UTF_8));
+    }
 }

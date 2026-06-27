@@ -87,4 +87,18 @@ public class RespResponse {
   public static byte[] none() {
     return simpleString("none");
   }
+
+  public static byte[] rdbFile(byte[] data) {
+    // It follows a format similar to Bulk Strings but terminates after the binary data.
+    if (data == null) {
+      return "$-1".getBytes(StandardCharsets.UTF_8);
+    }
+    byte[] prefix = ("$" + data.length + "\r\n").getBytes(StandardCharsets.UTF_8);
+
+    byte[] result = new byte[prefix.length + data.length];
+    System.arraycopy(prefix, 0, result, 0, prefix.length);
+    System.arraycopy(data, 0, result, prefix.length, data.length);
+
+    return result;
+  }
 }
