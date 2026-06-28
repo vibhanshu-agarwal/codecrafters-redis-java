@@ -37,7 +37,7 @@ public class Main {
     ServerConfig serverConfig = new ServerConfig(port, replicaOf);
     ReplicationService replicationService = new ReplicationService();
 
-    new ReplicationHandshakeHandler(serverConfig, keyValuePairs).run();
+    new ReplicationHandshakeHandler(serverConfig, replicationService, keyValuePairs).run();
 
     try (ServerSocket serverSocket = new ServerSocket(port)) {
 

@@ -46,7 +46,7 @@ public class ClientHandler {
     public void handle() {
         try (clientSocket; var inputStream = clientSocket.getInputStream(); var outputStream = clientSocket.getOutputStream()) {
             RespParser parser = new RespParser(inputStream);
-            CommandHandler commandHandler = new CommandHandler(serverConfig);
+            CommandHandler commandHandler = new CommandHandler(serverConfig, replicationService);
 
             List<byte[]> command;
             while ((command = parser.readCommand()) != null) {

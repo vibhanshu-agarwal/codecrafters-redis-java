@@ -84,7 +84,8 @@ class ReplicationPropagationTest {
             @Override public void close() {}
         };
 
-        ReplicationHandshakeHandler handler = new ReplicationHandshakeHandler(replicaConfig, keyValuePairs);
+        ReplicationService replicationService = new ReplicationService();
+        ReplicationHandshakeHandler handler = new ReplicationHandshakeHandler(replicaConfig, replicationService, keyValuePairs);
         
         // Call handleMasterCommands to process the SET command from the mock master
         handler.handleMasterCommands(masterSocket);
@@ -123,8 +124,9 @@ class ReplicationPropagationTest {
               public void close() {}
             };
 
+        ReplicationService replicationService = new ReplicationService();
         ReplicationHandshakeHandler handler =
-            new ReplicationHandshakeHandler(replicaConfig, keyValuePairs);
+            new ReplicationHandshakeHandler(replicaConfig, replicationService, keyValuePairs);
 
         // Call handleMasterCommands to process the GETACK command
         handler.handleMasterCommands(masterSocket);
@@ -173,8 +175,9 @@ class ReplicationPropagationTest {
               public void close() {}
             };
 
+        ReplicationService replicationService = new ReplicationService();
         ReplicationHandshakeHandler handler =
-            new ReplicationHandshakeHandler(replicaConfig, keyValuePairs);
+            new ReplicationHandshakeHandler(replicaConfig, replicationService, keyValuePairs);
         handler.handleMasterCommands(masterSocket);
 
         String responses = masterOutput.toString(StandardCharsets.UTF_8);

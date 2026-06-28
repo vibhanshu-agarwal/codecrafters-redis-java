@@ -2,6 +2,7 @@ package redis.command;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import redis.server.ReplicationService;
 import redis.server.ServerConfig;
 import redis.storage.KeyModificationTracker;
 import redis.storage.StoredValue;
@@ -16,6 +17,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class UnWatchCommandTest {
     private final ServerConfig serverConfig = new ServerConfig(6379, null);
+    private final ReplicationService replicationService = new ReplicationService();
     private TransactionState transactionState;
     private UnWatchCommand unWatchCommand;
     private Map<String, StoredValue> storage;
@@ -65,7 +67,7 @@ class UnWatchCommandTest {
 
     @Test
     void testFullUnWatchScenario() {
-        CommandHandler commandHandler = new CommandHandler(serverConfig);
+        CommandHandler commandHandler = new CommandHandler(serverConfig, replicationService);
         String key = "foo";
         
         // 1. SET foo 100
@@ -98,7 +100,7 @@ class UnWatchCommandTest {
 
     @Test
     void testUnWatchInsideMultiIsNotQueued() {
-        CommandHandler commandHandler = new CommandHandler(serverConfig);
+        CommandHandler commandHandler = new CommandHandler(serverConfig, replicationService);
         
         // MULTI
         commandHandler.handleCommand(List.of("MULTI".getBytes()), storage);

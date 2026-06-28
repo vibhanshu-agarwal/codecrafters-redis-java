@@ -1,6 +1,7 @@
 package redis.command;
 
 import redis.protocol.RespResponse;
+import redis.server.ReplicationService;
 import redis.server.ServerConfig;
 import redis.storage.StoredValue;
 
@@ -15,7 +16,7 @@ public class CommandHandler {
   private final TransactionState transactionState = new TransactionState();
 
   /** Registers supported commands with argument validation logic */
-  public CommandHandler(ServerConfig serverConfig) {
+  public CommandHandler(ServerConfig serverConfig, ReplicationService replicationService) {
     commands.put("PING", new PingCommand());
     commands.put("ECHO", new EchoCommand());
     commands.put("SET", new SetCommand());
@@ -39,6 +40,7 @@ public class CommandHandler {
     commands.put("INFO", new InfoCommand(serverConfig));
     commands.put("REPLCONF", new ReplConfCommand(serverConfig));
     commands.put("PSYNC", new PsyncCommand(serverConfig));
+    commands.put("WAIT", new WaitCommand(replicationService));
   }
 
   /**

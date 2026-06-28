@@ -1,6 +1,7 @@
 package redis.command;
 
 import org.junit.jupiter.api.Test;
+import redis.server.ReplicationService;
 import redis.server.ServerConfig;
 import redis.storage.StoredValue;
 
@@ -15,13 +16,14 @@ import static org.junit.jupiter.api.Assertions.*;
 class CommandHandlerTest {
 
     private final ServerConfig serverConfig = new ServerConfig(6379, null);
+    private final ReplicationService replicationService = new ReplicationService();
 
     /**
      * Validates PING command returns PONG response
      */
     @Test
     void testHandlePingCommand() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
         List<byte[]> parts = new ArrayList<>();
         parts.add("PING".getBytes(StandardCharsets.UTF_8));
@@ -35,7 +37,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleEchoCommand() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
         List<byte[]> parts = new ArrayList<>();
         parts.add("ECHO".getBytes(StandardCharsets.UTF_8));
@@ -50,7 +52,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleSetAndGetCommands() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
         
         // SET
@@ -76,7 +78,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleUnknownCommand() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
         List<byte[]> parts = new ArrayList<>();
         parts.add("UNKNOWN".getBytes(StandardCharsets.UTF_8));
@@ -90,7 +92,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleCaseInsensitiveCommand() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
         List<byte[]> parts = new ArrayList<>();
         parts.add("set".getBytes(StandardCharsets.UTF_8));
@@ -106,7 +108,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleLRangeCommand() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
 
         // RPUSH
@@ -134,7 +136,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleLPushCommand() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
 
         // LPUSH
@@ -165,7 +167,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleLLenCommand() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
 
         // RPUSH
@@ -200,7 +202,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleLPopCommand() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
 
         // RPUSH
@@ -237,7 +239,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleBLPopCommand() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
 
         // Seed the list first so this handler-level test does not need to block.
@@ -261,7 +263,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleTypeCommand() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
 
         // String type
@@ -306,7 +308,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleXAddCommand() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
 
         List<byte[]> xaddParts = new ArrayList<>();
@@ -325,7 +327,7 @@ class CommandHandlerTest {
        */
       @Test
       void testHandleXRangeCommand() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
 
         // XADD some entries
@@ -367,7 +369,7 @@ class CommandHandlerTest {
        */
       @Test
       void testHandleXReadCommand() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
 
         // XADD to stream 1
@@ -410,7 +412,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleXReadBlockCommand() throws Exception {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
 
         // Start blocking XREAD in another thread
@@ -448,7 +450,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleIncrCommand() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
 
         // INCR non-existing key
@@ -483,7 +485,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleMultiCommand() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
         List<byte[]> parts = new ArrayList<>();
         parts.add("MULTI".getBytes(StandardCharsets.UTF_8));
@@ -497,7 +499,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleExecWithoutMulti() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
         List<byte[]> parts = new ArrayList<>();
         parts.add("EXEC".getBytes(StandardCharsets.UTF_8));
@@ -511,7 +513,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleEmptyTransaction() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
         
         // MULTI
@@ -536,8 +538,8 @@ class CommandHandlerTest {
      */
     @Test
     void testMultiStateIsIsolated() {
-        CommandHandler handler1 = new CommandHandler(serverConfig);
-        CommandHandler handler2 = new CommandHandler(serverConfig);
+        CommandHandler handler1 = new CommandHandler(serverConfig, replicationService);
+        CommandHandler handler2 = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
 
         // Start transaction on handler1
@@ -559,7 +561,7 @@ class CommandHandlerTest {
      */
     @Test
     void testQueuingCommands() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
 
         // Start transaction
@@ -592,7 +594,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleFullTransaction() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
 
         // MULTI
@@ -649,7 +651,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleDiscardCommand() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
 
         // Start transaction
@@ -679,7 +681,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleDiscardWithoutMulti() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
 
         byte[] response = handler.handleCommand(List.of("DISCARD".getBytes(StandardCharsets.UTF_8)), storage);
@@ -691,7 +693,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleWatchCommand() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
         List<byte[]> parts = new ArrayList<>();
         parts.add("WATCH".getBytes(StandardCharsets.UTF_8));
@@ -706,7 +708,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleWatchInsideTransaction() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
 
         // Start transaction
@@ -730,8 +732,8 @@ class CommandHandlerTest {
      */
     @Test
     void testWatchKeyFailure() {
-        CommandHandler handler1 = new CommandHandler(serverConfig);
-        CommandHandler handler2 = new CommandHandler(serverConfig);
+        CommandHandler handler1 = new CommandHandler(serverConfig, replicationService);
+        CommandHandler handler2 = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
 
         // handler1 watches 'foo'
@@ -770,7 +772,7 @@ class CommandHandlerTest {
      */
     @Test
     void testWatchKeySuccess() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
 
         // WATCH 'foo'
@@ -802,7 +804,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleUnWatchCommand() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
         List<byte[]> parts = new ArrayList<>();
         parts.add("UNWATCH".getBytes(StandardCharsets.UTF_8));
@@ -817,8 +819,8 @@ class CommandHandlerTest {
      */
     @Test
     void testUnWatchPreventsExecFailure() {
-        CommandHandler handler1 = new CommandHandler(serverConfig);
-        CommandHandler handler2 = new CommandHandler(serverConfig);
+        CommandHandler handler1 = new CommandHandler(serverConfig, replicationService);
+        CommandHandler handler2 = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
 
         // handler1 watches 'foo'
@@ -862,7 +864,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleInfoCommandAsMaster() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
         List<byte[]> parts = new ArrayList<>();
         parts.add("INFO".getBytes(StandardCharsets.UTF_8));
@@ -877,7 +879,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleInfoCommandAsReplica() {
-        CommandHandler handler = new CommandHandler(new ServerConfig(6380, "localhost 6379"));
+        CommandHandler handler = new CommandHandler(new ServerConfig(6380, "localhost 6379"), replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
         List<byte[]> parts = new ArrayList<>();
         parts.add("INFO".getBytes(StandardCharsets.UTF_8));
@@ -892,7 +894,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleReplConfCommand() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
         List<byte[]> parts = new ArrayList<>();
         parts.add("REPLCONF".getBytes(StandardCharsets.UTF_8));
@@ -908,7 +910,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleReplConfGetAckCommand() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
         List<byte[]> parts = new ArrayList<>();
         parts.add("REPLCONF".getBytes(StandardCharsets.UTF_8));
@@ -926,7 +928,7 @@ class CommandHandlerTest {
     @Test
     void testHandleReplConfGetAckWithNonZeroOffset() {
         serverConfig.setMasterReplOffset(123);
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
         List<byte[]> parts = new ArrayList<>();
         parts.add("REPLCONF".getBytes(StandardCharsets.UTF_8));
@@ -943,7 +945,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandlePsyncCommand() {
-        CommandHandler handler = new CommandHandler(serverConfig);
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
         Map<String, StoredValue> storage = new HashMap<>();
         List<byte[]> parts = new ArrayList<>();
         parts.add("PSYNC".getBytes(StandardCharsets.UTF_8));
@@ -958,5 +960,27 @@ class CommandHandlerTest {
         byte[] rdbPart = java.util.Arrays.copyOfRange(response, expectedPrefix.length(), response.length);
         assertTrue(rdbPart.length > 0);
         assertEquals('$', rdbPart[0]);
+    }
+
+    /**
+     * Validates WAIT command returns the correct number of connected replicas
+     */
+    @Test
+    void testHandleWaitCommand() {
+        CommandHandler handler = new CommandHandler(serverConfig, replicationService);
+        Map<String, StoredValue> storage = new HashMap<>();
+        List<byte[]> parts = new ArrayList<>();
+        parts.add("WAIT".getBytes(StandardCharsets.UTF_8));
+        parts.add("0".getBytes(StandardCharsets.UTF_8));
+        parts.add("60000".getBytes(StandardCharsets.UTF_8));
+
+        // Case 1: No replicas
+        byte[] response = handler.handleCommand(parts, storage);
+        assertEquals(":0\r\n", new String(response, StandardCharsets.UTF_8));
+
+        // Case 2: One replica
+        replicationService.addReplica(new java.io.ByteArrayOutputStream());
+        byte[] response2 = handler.handleCommand(parts, storage);
+        assertEquals(":1\r\n", new String(response2, StandardCharsets.UTF_8));
     }
 }

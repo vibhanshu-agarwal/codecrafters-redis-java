@@ -23,7 +23,7 @@ class ReplicationHandshakeTest {
     void testPerformHandshake() throws IOException {
         // Setup ServerConfig
         ServerConfig config = new ServerConfig(6380, "localhost 6379");
-        ReplicationHandshakeHandler handler = new ReplicationHandshakeHandler(config, new HashMap<>());
+        ReplicationHandshakeHandler handler = new ReplicationHandshakeHandler(config, new ReplicationService(), new HashMap<>());
 
         // Prepare mock responses from master (including RDB file)
         String responses = "+PONG\r\n+OK\r\n+OK\r\n+FULLRESYNC 8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb 0\r\n$0\r\n";

@@ -13,11 +13,15 @@ import redis.storage.StoredValue;
 
 public class ReplicationHandshakeHandler {
   private final ServerConfig serverConfig;
+  private final ReplicationService replicationService;
   private final Map<String, StoredValue> keyValuePairs;
 
   public ReplicationHandshakeHandler(
-      ServerConfig serverConfig, Map<String, StoredValue> keyValuePairs) {
+      ServerConfig serverConfig,
+      ReplicationService replicationService,
+      Map<String, StoredValue> keyValuePairs) {
     this.serverConfig = serverConfig;
+    this.replicationService = replicationService;
     this.keyValuePairs = keyValuePairs;
   }
 
@@ -72,7 +76,7 @@ public class ReplicationHandshakeHandler {
     var inputStream = masterSocket.getInputStream();
     var outputStream = masterSocket.getOutputStream();
     RespParser parser = new RespParser(inputStream);
-    CommandHandler commandHandler = new CommandHandler(serverConfig);
+    CommandHandler commandHandler = new CommandHandler(serverConfig, replicationService);
     long cumulativeOffset = 0;
 
     List<byte[]> parts;
