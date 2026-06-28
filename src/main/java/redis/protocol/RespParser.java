@@ -174,13 +174,6 @@ public class RespParser {
       return n;
     }
 
-    @Override
-    public byte[] readNBytes(int len) throws IOException {
-      byte[] b = super.readNBytes(len);
-      totalBytesRead += b.length;
-      return b;
-    }
-
     public long getTotalBytesRead() {
       return totalBytesRead;
     }
