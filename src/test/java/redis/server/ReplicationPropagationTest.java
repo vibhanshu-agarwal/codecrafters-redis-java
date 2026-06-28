@@ -1,21 +1,18 @@
 package redis.server;
 
-import org.junit.jupiter.api.Test;
-import redis.protocol.RespParser;
-import redis.protocol.RespResponse;
-import redis.storage.StoredValue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.nio.charset.StandardCharsets;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
-
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import org.junit.jupiter.api.Test;
+import redis.protocol.RespParser;
+import redis.storage.StoredValue;
 
 class ReplicationPropagationTest {
 
@@ -97,5 +94,43 @@ class ReplicationPropagationTest {
         
         // Verify that the state was updated
         assertEquals("bar", keyValuePairs.get("foo").toString());
+    }
+
+    @Test
+    void testReplicaGetAckResponse() throws IOException {
+        Map<String, StoredValue> keyValuePairs = new ConcurrentHashMap<>();
+        ServerConfig replicaConfig = new ServerConfig(6380, "localhost 6379");
+
+        // Master sends REPLCONF GETACK *
+        String masterData = "*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n";
+        ByteArrayInputStream masterInput =
+            new ByteArrayInputStream(masterData.getBytes(StandardCharsets.UTF_8));
+        ByteArrayOutputStream masterOutput = new ByteArrayOutputStream();
+
+        Socket masterSocket =
+            new Socket() {
+              @Override
+              public java.io.InputStream getInputStream() {
+                return masterInput;
+              }
+
+              @Override
+              public java.io.OutputStream getOutputStream() {
+                return masterOutput;
+              }
+
+              @Override
+              public void close() {}
+            };
+
+        ReplicationHandshakeHandler handler =
+            new ReplicationHandshakeHandler(replicaConfig, keyValuePairs);
+
+        // Call handleMasterCommands to process the GETACK command
+        handler.handleMasterCommands(masterSocket);
+
+        // Verify that the replica responded with REPLCONF ACK 0
+        String expectedResponse = "*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n$1\r\n0\r\n";
+        assertEquals(expectedResponse, masterOutput.toString(StandardCharsets.UTF_8));
     }
 }
