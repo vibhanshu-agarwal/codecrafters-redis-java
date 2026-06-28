@@ -1,17 +1,15 @@
 package redis.server;
 
+import java.io.IOException;
+import java.net.Socket;
+import java.nio.charset.StandardCharsets;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 import redis.command.CommandHandler;
 import redis.protocol.RespParser;
 import redis.protocol.RespResponse;
 import redis.storage.StoredValue;
-
-import java.io.IOException;
-import java.net.Socket;
-import java.nio.charset.StandardCharsets;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Locale;
-import java.util.Map;
 
 public class ReplicationHandshakeHandler {
   private final ServerConfig serverConfig;
@@ -75,16 +73,26 @@ public class ReplicationHandshakeHandler {
     var outputStream = masterSocket.getOutputStream();
     RespParser parser = new RespParser(inputStream);
     CommandHandler commandHandler = new CommandHandler(serverConfig);
+    long cumulativeOffset = 0;
 
-    List<byte[]> command;
-    while ((command = parser.readCommand()) != null) {
-      byte[] response = commandHandler.handleCommand(command, keyValuePairs);
+    List<byte[]> parts;
+    long startBytes = parser.getTotalBytesRead();
+    while ((parts = parser.readCommand()) != null) {
+      long endBytes = parser.getTotalBytesRead();
 
-      if (command.size() >= 2) {
+      serverConfig.setMasterReplOffset(cumulativeOffset);
+
+      byte[] response = commandHandler.handleCommand(parts, keyValuePairs);
+
+      cumulativeOffset += endBytes - startBytes;
+      startBytes = endBytes;
+
+      if (parts.size() >= 2) {
         String cmdName =
-            new String(command.get(0), StandardCharsets.UTF_8).toUpperCase(Locale.ROOT);
+            new String(parts.get(0), StandardCharsets.UTF_8).toUpperCase(Locale.ROOT);
         String subCommand =
-            new String(command.get(1), StandardCharsets.UTF_8).toUpperCase(Locale.ROOT);
+            new String(parts.get(1), StandardCharsets.UTF_8).toUpperCase(Locale.ROOT);
+
 
         if ("REPLCONF".equals(cmdName) && "GETACK".equals(subCommand)) {
           outputStream.write(response);

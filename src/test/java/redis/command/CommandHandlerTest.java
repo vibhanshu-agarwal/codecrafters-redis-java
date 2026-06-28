@@ -921,6 +921,24 @@ class CommandHandlerTest {
     }
 
     /**
+     * Validates REPLCONF GETACK command returns the correct ACK response when offset is non-zero
+     */
+    @Test
+    void testHandleReplConfGetAckWithNonZeroOffset() {
+        serverConfig.setMasterReplOffset(123);
+        CommandHandler handler = new CommandHandler(serverConfig);
+        Map<String, StoredValue> storage = new HashMap<>();
+        List<byte[]> parts = new ArrayList<>();
+        parts.add("REPLCONF".getBytes(StandardCharsets.UTF_8));
+        parts.add("GETACK".getBytes(StandardCharsets.UTF_8));
+        parts.add("*".getBytes(StandardCharsets.UTF_8));
+
+        byte[] response = handler.handleCommand(parts, storage);
+        String expected = "*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n$3\r\n123\r\n";
+        assertEquals(expected, new String(response, StandardCharsets.UTF_8));
+    }
+
+    /**
      * Validates PSYNC command returns FULLRESYNC response
      */
     @Test

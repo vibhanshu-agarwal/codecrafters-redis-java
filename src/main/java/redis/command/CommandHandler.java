@@ -37,7 +37,7 @@ public class CommandHandler {
     commands.put("WATCH", new WatchCommand(transactionState));
     commands.put("UNWATCH", new UnWatchCommand(transactionState));
     commands.put("INFO", new InfoCommand(serverConfig));
-    commands.put("REPLCONF", new ReplConfCommand());
+    commands.put("REPLCONF", new ReplConfCommand(serverConfig));
     commands.put("PSYNC", new PsyncCommand(serverConfig));
   }
 

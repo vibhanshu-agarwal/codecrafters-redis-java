@@ -1,6 +1,7 @@
 package redis.server;
 
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class ServerConfig {
   private final int port;
@@ -8,7 +9,7 @@ public class ServerConfig {
   private final String replicaOf;
 
   private final String masterReplid = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb";
-  private final int masterReplOffset = 0;
+  private final AtomicLong masterReplOffset = new AtomicLong(0);
 
   public ServerConfig(int port, String replicaOf) {
     this.port = port;
@@ -19,7 +20,7 @@ public class ServerConfig {
     return Objects.nonNull(replicaOf);
   }
 
-  //Parse replicaOf to extract replica host and port by space
+  // Parse replicaOf to extract replica host and port by space
   public String getReplicaHost() {
     return replicaOf.split(" ")[0];
   }
@@ -36,7 +37,11 @@ public class ServerConfig {
     return masterReplid;
   }
 
-  public int getMasterReplOffset() {
-    return masterReplOffset;
+  public long getMasterReplOffset() {
+    return masterReplOffset.get();
+  }
+
+  public void setMasterReplOffset(long offset) {
+    this.masterReplOffset.set(offset);
   }
 }

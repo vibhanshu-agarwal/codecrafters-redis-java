@@ -1,15 +1,20 @@
 package redis.protocol;
 
+import java.io.FilterInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.List;
 
 public class RespParser {
-  private final InputStream input;
+  private final CountingInputStream input;
 
   public RespParser(InputStream input) {
-    this.input = input;
+    this.input = new CountingInputStream(input);
+  }
+
+  public long getTotalBytesRead() {
+    return input.getTotalBytesRead();
   }
 
   /**
@@ -115,6 +120,7 @@ public class RespParser {
         throw new IOException("Unexpected end of stream");
       }
 
+
       if (b == '\r') {
         int next = input.read();
         if (next != '\n') {
@@ -140,6 +146,43 @@ public class RespParser {
 
     if (cr != '\r' || lf != '\n') {
       throw new IOException("Expected CRLF");
+    }
+  }
+
+  private static class CountingInputStream extends FilterInputStream {
+    private long totalBytesRead = 0;
+
+    protected CountingInputStream(InputStream in) {
+      super(in);
+    }
+
+    @Override
+    public int read() throws IOException {
+      int b = super.read();
+      if (b != -1) {
+        totalBytesRead++;
+      }
+      return b;
+    }
+
+    @Override
+    public int read(byte[] b, int off, int len) throws IOException {
+      int n = super.read(b, off, len);
+      if (n != -1) {
+        totalBytesRead += n;
+      }
+      return n;
+    }
+
+    @Override
+    public byte[] readNBytes(int len) throws IOException {
+      byte[] b = super.readNBytes(len);
+      totalBytesRead += b.length;
+      return b;
+    }
+
+    public long getTotalBytesRead() {
+      return totalBytesRead;
     }
   }
 }

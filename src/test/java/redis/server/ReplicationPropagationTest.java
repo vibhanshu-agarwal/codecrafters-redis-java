@@ -132,5 +132,57 @@ class ReplicationPropagationTest {
         // Verify that the replica responded with REPLCONF ACK 0
         String expectedResponse = "*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n$1\r\n0\r\n";
         assertEquals(expectedResponse, masterOutput.toString(StandardCharsets.UTF_8));
+      }
+
+      @Test
+      void testReplicaOffsetSequence() throws IOException {
+        Map<String, StoredValue> keyValuePairs = new ConcurrentHashMap<>();
+        ServerConfig replicaConfig = new ServerConfig(6380, "localhost 6379");
+
+        // Sequence: GETACK (0), PING, GETACK (51), SET (29), SET (29), GETACK (146)
+        String getAck = "*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n"; // 37 bytes
+        String ping = "*1\r\n$4\r\nPING\r\n"; // 14 bytes
+        String set1 = "*3\r\n$3\r\nSET\r\n$3\r\nfoo\r\n$1\r\n1\r\n"; // 29 bytes
+        String set2 = "*3\r\n$3\r\nSET\r\n$3\r\nbar\r\n$1\r\n2\r\n"; // 29 bytes
+
+        StringBuilder masterData = new StringBuilder();
+        masterData.append(getAck);
+        masterData.append(ping);
+        masterData.append(getAck);
+        masterData.append(set1);
+        masterData.append(set2);
+        masterData.append(getAck);
+
+        ByteArrayInputStream masterInput =
+            new ByteArrayInputStream(masterData.toString().getBytes(StandardCharsets.UTF_8));
+        ByteArrayOutputStream masterOutput = new ByteArrayOutputStream();
+
+        Socket masterSocket =
+            new Socket() {
+              @Override
+              public java.io.InputStream getInputStream() {
+                return masterInput;
+              }
+
+              @Override
+              public java.io.OutputStream getOutputStream() {
+                return masterOutput;
+              }
+
+              @Override
+              public void close() {}
+            };
+
+        ReplicationHandshakeHandler handler =
+            new ReplicationHandshakeHandler(replicaConfig, keyValuePairs);
+        handler.handleMasterCommands(masterSocket);
+
+        String responses = masterOutput.toString(StandardCharsets.UTF_8);
+
+        String expected1 = "*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n$1\r\n0\r\n";
+        String expected2 = "*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n$2\r\n51\r\n";
+        String expected3 = "*3\r\n$8\r\nREPLCONF\r\n$3\r\nACK\r\n$3\r\n146\r\n";
+
+        assertEquals(expected1 + expected2 + expected3, responses);
+      }
     }
-}
