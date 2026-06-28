@@ -46,19 +46,21 @@ public class ClientHandler {
     public void handle() {
         try (clientSocket; var inputStream = clientSocket.getInputStream(); var outputStream = clientSocket.getOutputStream()) {
             RespParser parser = new RespParser(inputStream);
-            CommandHandler commandHandler = new CommandHandler(serverConfig, replicationService);
+            CommandHandler commandHandler = new CommandHandler(serverConfig, replicationService, outputStream);
 
             List<byte[]> command;
             while ((command = parser.readCommand()) != null) {
                 String cmdName = new String(command.getFirst(), StandardCharsets.UTF_8).toUpperCase(Locale.ROOT);
                 byte[] response = commandHandler.handleCommand(command, keyValuePairs);
                 
-                BlockingCommandCoordinator.lock().lock();
-                try {
-                    outputStream.write(response);
-                    outputStream.flush();
-                } finally {
-                    BlockingCommandCoordinator.lock().unlock();
+                if (response != null) {
+                    BlockingCommandCoordinator.lock().lock();
+                    try {
+                        outputStream.write(response);
+                        outputStream.flush();
+                    } finally {
+                        BlockingCommandCoordinator.lock().unlock();
+                    }
                 }
 
                 if (cmdName.equals("PSYNC")) {

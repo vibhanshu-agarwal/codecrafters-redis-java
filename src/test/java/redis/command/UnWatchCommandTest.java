@@ -67,7 +67,7 @@ class UnWatchCommandTest {
 
     @Test
     void testFullUnWatchScenario() {
-        CommandHandler commandHandler = new CommandHandler(serverConfig, replicationService);
+        CommandHandler commandHandler = new CommandHandler(serverConfig, replicationService, null);
         String key = "foo";
         
         // 1. SET foo 100
@@ -100,7 +100,7 @@ class UnWatchCommandTest {
 
     @Test
     void testUnWatchInsideMultiIsNotQueued() {
-        CommandHandler commandHandler = new CommandHandler(serverConfig, replicationService);
+        CommandHandler commandHandler = new CommandHandler(serverConfig, replicationService, null);
         
         // MULTI
         commandHandler.handleCommand(List.of("MULTI".getBytes()), storage);

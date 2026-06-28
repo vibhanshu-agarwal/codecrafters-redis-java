@@ -1,6 +1,7 @@
 package redis.command;
 
 import org.junit.jupiter.api.Test;
+import redis.server.ReplicationService;
 import redis.server.ServerConfig;
 import redis.storage.StoredValue;
 
@@ -17,7 +18,7 @@ class PsyncCommandTest {
     @Test
     void testExecute() {
         ServerConfig serverConfig = new ServerConfig(6379, null);
-        PsyncCommand command = new PsyncCommand(serverConfig);
+        PsyncCommand command = new PsyncCommand(serverConfig, new ReplicationService());
         Map<String, StoredValue> storage = new HashMap<>();
         List<byte[]> args = new ArrayList<>();
         args.add("?".getBytes(StandardCharsets.UTF_8));

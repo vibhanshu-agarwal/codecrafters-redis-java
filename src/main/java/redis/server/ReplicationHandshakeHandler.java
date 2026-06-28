@@ -76,7 +76,7 @@ public class ReplicationHandshakeHandler {
     var inputStream = masterSocket.getInputStream();
     var outputStream = masterSocket.getOutputStream();
     RespParser parser = new RespParser(inputStream);
-    CommandHandler commandHandler = new CommandHandler(serverConfig, replicationService);
+    CommandHandler commandHandler = new CommandHandler(serverConfig, replicationService, outputStream);
     long cumulativeOffset = 0;
 
     List<byte[]> parts;

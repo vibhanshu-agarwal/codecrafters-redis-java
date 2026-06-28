@@ -5,6 +5,7 @@ import redis.server.ReplicationService;
 import redis.server.ServerConfig;
 import redis.storage.StoredValue;
 
+import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
@@ -16,7 +17,7 @@ public class CommandHandler {
   private final TransactionState transactionState = new TransactionState();
 
   /** Registers supported commands with argument validation logic */
-  public CommandHandler(ServerConfig serverConfig, ReplicationService replicationService) {
+  public CommandHandler(ServerConfig serverConfig, ReplicationService replicationService, OutputStream clientOutput) {
     commands.put("PING", new PingCommand());
     commands.put("ECHO", new EchoCommand());
     commands.put("SET", new SetCommand());
@@ -38,8 +39,8 @@ public class CommandHandler {
     commands.put("WATCH", new WatchCommand(transactionState));
     commands.put("UNWATCH", new UnWatchCommand(transactionState));
     commands.put("INFO", new InfoCommand(serverConfig));
-    commands.put("REPLCONF", new ReplConfCommand(serverConfig));
-    commands.put("PSYNC", new PsyncCommand(serverConfig));
+    commands.put("REPLCONF", new ReplConfCommand(serverConfig, replicationService, clientOutput));
+    commands.put("PSYNC", new PsyncCommand(serverConfig, replicationService));
     commands.put("WAIT", new WaitCommand(replicationService));
   }
 
