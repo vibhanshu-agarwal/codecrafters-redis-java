@@ -7,13 +7,21 @@ public class ServerConfig {
   private final int port;
 
   private final String replicaOf;
+  private final String dir;
+  private final String dbfilename;
 
   private final String masterReplid = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb";
   private final AtomicLong masterReplOffset = new AtomicLong(0);
 
   public ServerConfig(int port, String replicaOf) {
+    this(port, replicaOf, "", "");
+  }
+
+  public ServerConfig(int port, String replicaOf, String dir, String dbfilename) {
     this.port = port;
     this.replicaOf = replicaOf;
+    this.dir = dir;
+    this.dbfilename = dbfilename;
   }
 
   public boolean isReplica() {
@@ -31,6 +39,14 @@ public class ServerConfig {
 
   public int getPort() {
     return port;
+  }
+
+  public String getDir() {
+    return dir;
+  }
+
+  public String getDbfilename() {
+    return dbfilename;
   }
 
   public String getMasterReplid() {

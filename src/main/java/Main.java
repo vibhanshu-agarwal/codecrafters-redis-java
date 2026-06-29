@@ -20,9 +20,17 @@ public class Main {
 
     int port = 6379;
     String replicaOf = null;
+    String dir = "";
+    String dbfilename = "";
     for (int i = 0; i < args.length; i++) {
       if ("--port".equals(args[i]) && i + 1 < args.length) {
         port = Integer.parseInt(args[i + 1]);
+      }
+      if ("--dir".equals(args[i]) && i + 1 < args.length) {
+        dir = args[i + 1];
+      }
+      if ("--dbfilename".equals(args[i]) && i + 1 < args.length) {
+        dbfilename = args[i + 1];
       }
       // Parse --replicaof flag (value is "<host> <port>") alongside --port.
       if ("--replicaof".equals(args[i]) && i + 1 < args.length) {
@@ -34,7 +42,7 @@ public class Main {
       }
     }
 
-    ServerConfig serverConfig = new ServerConfig(port, replicaOf);
+    ServerConfig serverConfig = new ServerConfig(port, replicaOf, dir, dbfilename);
     ReplicationService replicationService = new ReplicationService();
 
     new ReplicationHandshakeHandler(serverConfig, replicationService, keyValuePairs).run();

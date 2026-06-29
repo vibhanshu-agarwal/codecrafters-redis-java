@@ -875,6 +875,32 @@ class CommandHandlerTest {
     }
 
     /**
+     * Validates CONFIG GET command returns configured RDB persistence values.
+     */
+    @Test
+    void testHandleConfigGetCommand() {
+        ServerConfig config = new ServerConfig(6379, null, "/tmp/redis-files", "dump.rdb");
+        CommandHandler handler = new CommandHandler(config, replicationService, null);
+        Map<String, StoredValue> storage = new HashMap<>();
+
+        List<byte[]> dirParts = List.of(
+                "CONFIG".getBytes(StandardCharsets.UTF_8),
+                "GET".getBytes(StandardCharsets.UTF_8),
+                "dir".getBytes(StandardCharsets.UTF_8)
+        );
+        byte[] dirResponse = handler.handleCommand(dirParts, storage);
+        assertEquals("*2\r\n$3\r\ndir\r\n$16\r\n/tmp/redis-files\r\n", new String(dirResponse, StandardCharsets.UTF_8));
+
+        List<byte[]> dbfilenameParts = List.of(
+                "CONFIG".getBytes(StandardCharsets.UTF_8),
+                "GET".getBytes(StandardCharsets.UTF_8),
+                "dbfilename".getBytes(StandardCharsets.UTF_8)
+        );
+        byte[] dbfilenameResponse = handler.handleCommand(dbfilenameParts, storage);
+        assertEquals("*2\r\n$10\r\ndbfilename\r\n$8\r\ndump.rdb\r\n", new String(dbfilenameResponse, StandardCharsets.UTF_8));
+    }
+
+    /**
      * Validates INFO replication command returns role:slave when server is a replica
      */
     @Test
