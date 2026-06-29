@@ -7,6 +7,7 @@ import redis.server.ClientHandler;
 import redis.server.ReplicationHandshakeHandler;
 import redis.server.ReplicationService;
 import redis.server.ServerConfig;
+import redis.storage.RdbLoader;
 import redis.storage.StoredValue;
 
 public class Main {
@@ -44,6 +45,11 @@ public class Main {
 
     ServerConfig serverConfig = new ServerConfig(port, replicaOf, dir, dbfilename);
     ReplicationService replicationService = new ReplicationService();
+    try {
+      new RdbLoader().load(dir, dbfilename, keyValuePairs);
+    } catch (IOException e) {
+      System.out.println("Failed to load RDB file: " + e.getMessage());
+    }
 
     new ReplicationHandshakeHandler(serverConfig, replicationService, keyValuePairs).run();
 

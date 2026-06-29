@@ -22,6 +22,7 @@ public class CommandHandler {
     commands.put("ECHO", new EchoCommand());
     commands.put("SET", new SetCommand());
     commands.put("GET", new GetCommand());
+    commands.put("KEYS", new KeysCommand());
     commands.put("RPUSH", new RPushCommand());
     commands.put("LRANGE", new LRangeCommand());
     commands.put("LPUSH", new LPushCommand());
