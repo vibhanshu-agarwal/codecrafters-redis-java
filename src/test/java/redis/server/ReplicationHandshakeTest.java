@@ -21,16 +21,7 @@ class ReplicationHandshakeTest {
   void testPerformHandshake() throws IOException {
     // Setup ServerConfig
 
-    ServerConfig config =
-        new ServerConfig(
-            6380,
-            "localhost 6379",
-            TestConstants.dir,
-            TestConstants.dbfilename,
-            TestConstants.appendonly,
-            TestConstants.appenddirname,
-            TestConstants.appendfilename,
-            TestConstants.appendfsync);
+    ServerConfig config = TestConstants.createServerConfig(6380, "localhost 6379");
     ReplicationHandshakeHandler handler =
         new ReplicationHandshakeHandler(config, new ReplicationService(), new HashMap<>());
 

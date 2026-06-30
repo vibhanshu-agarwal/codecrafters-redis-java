@@ -19,16 +19,7 @@ class ReplicationPropagationTest {
 
   @Test
   void testCommandPropagation() throws IOException, InterruptedException {
-    ServerConfig masterConfig =
-        new ServerConfig(
-            6379,
-            null,
-            TestConstants.dir,
-            TestConstants.dbfilename,
-            TestConstants.appendonly,
-            TestConstants.appenddirname,
-            TestConstants.appendfilename,
-            TestConstants.appendfsync);
+    ServerConfig masterConfig = TestConstants.createDefaultServerConfig();
     ReplicationService replicationService = new ReplicationService();
     Map<String, StoredValue> keyValuePairs = new ConcurrentHashMap<>();
 
@@ -106,16 +97,7 @@ class ReplicationPropagationTest {
   @Test
   void testReplicaProcessing() throws IOException, InterruptedException {
     Map<String, StoredValue> keyValuePairs = new ConcurrentHashMap<>();
-    ServerConfig replicaConfig =
-        new ServerConfig(
-            6380,
-            "localhost 6379",
-            TestConstants.dir,
-            TestConstants.dbfilename,
-            TestConstants.appendonly,
-            TestConstants.appenddirname,
-            TestConstants.appendfilename,
-            TestConstants.appendfsync);
+    ServerConfig replicaConfig = TestConstants.createServerConfig(6380, "localhost 6379");
 
     // Mock master connection
     // Master sends SET foo bar
@@ -157,16 +139,7 @@ class ReplicationPropagationTest {
   @Test
   void testReplicaGetAckResponse() throws IOException {
     Map<String, StoredValue> keyValuePairs = new ConcurrentHashMap<>();
-      ServerConfig replicaConfig =
-              new ServerConfig(
-                      6380,
-                      "localhost 6379",
-                      TestConstants.dir,
-                      TestConstants.dbfilename,
-                      TestConstants.appendonly,
-                      TestConstants.appenddirname,
-                      TestConstants.appendfilename,
-                      TestConstants.appendfsync);
+      ServerConfig replicaConfig = TestConstants.createServerConfig(6380, "localhost 6379");
 
     // Master sends REPLCONF GETACK *
     String masterData = "*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n";
@@ -205,16 +178,7 @@ class ReplicationPropagationTest {
   @Test
   void testReplicaOffsetSequence() throws IOException {
     Map<String, StoredValue> keyValuePairs = new ConcurrentHashMap<>();
-      ServerConfig replicaConfig =
-              new ServerConfig(
-                      6380,
-                      "localhost 6379",
-                      TestConstants.dir,
-                      TestConstants.dbfilename,
-                      TestConstants.appendonly,
-                      TestConstants.appenddirname,
-                      TestConstants.appendfilename,
-                      TestConstants.appendfsync);
+      ServerConfig replicaConfig = TestConstants.createServerConfig(6380, "localhost 6379");
 
     // Sequence: GETACK (0), PING, GETACK (51), SET (29), SET (29), GETACK (146)
     String getAck = "*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n"; // 37 bytes

@@ -22,15 +22,15 @@ public class ServerConfig {
     this(port, replicaOf, "", "", "no", "appendonlydir", "appendonly.aof", "everysec");
   }
 
-  public ServerConfig(int port, String replicaOf, String dir, String dbfilename, String no, String appendonlydir, String appendonlyaof, String everysec) {
+  public ServerConfig(int port, String replicaOf, String dir, String dbfilename, String appendonly, String appenddirname, String appendfilename, String appendfsync) {
     this.port = port;
     this.replicaOf = replicaOf;
     this.dir = dir;
     this.dbfilename = dbfilename;
-    this.appendonly = no;
-    this.appenddirname = appendonlydir;
-    this.appendfilename = appendonlyaof;
-    this.appendfsync = everysec;
+    this.appendonly = appendonly;
+    this.appenddirname = appenddirname;
+    this.appendfilename = appendfilename;
+    this.appendfsync = appendfsync;
   }
 
   public boolean isReplica() {

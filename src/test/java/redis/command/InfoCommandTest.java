@@ -20,15 +20,7 @@ class InfoCommandTest {
      */
     @Test
     void testInfoReturnsMasterRole() {
-        InfoCommand command = new InfoCommand(new ServerConfig(
-                6380,
-                "localhost 6379",
-                TestConstants.dir,
-                TestConstants.dbfilename,
-                TestConstants.appendonly,
-                TestConstants.appenddirname,
-                TestConstants.appendfilename,
-                TestConstants.appendfsync));
+        InfoCommand command = new InfoCommand(TestConstants.createDefaultServerConfig());
         Map<String, StoredValue> storage = new HashMap<>();
 
         byte[] response = command.execute(Collections.emptyList(), storage);
@@ -43,15 +35,7 @@ class InfoCommandTest {
      */
     @Test
     void testInfoReturnsSlaveRole() {
-        InfoCommand command = new InfoCommand(new ServerConfig(
-                6380,
-                "localhost 6379",
-                TestConstants.dir,
-                TestConstants.dbfilename,
-                TestConstants.appendonly,
-                TestConstants.appenddirname,
-                TestConstants.appendfilename,
-                TestConstants.appendfsync));
+        InfoCommand command = new InfoCommand(TestConstants.createServerConfig(6380, "localhost 6379"));
         Map<String, StoredValue> storage = new HashMap<>();
 
         byte[] response = command.execute(Collections.emptyList(), storage);

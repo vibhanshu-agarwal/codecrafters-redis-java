@@ -1,6 +1,7 @@
 package redis.command;
 
 import org.junit.jupiter.api.Test;
+import redis.TestConstants;
 import redis.server.ReplicationService;
 import redis.server.ServerConfig;
 import redis.storage.StoredValue;
@@ -18,7 +19,7 @@ class ConfigCommandTest {
 
   @Test
   void testConfigGetDir() {
-    ServerConfig serverConfig = new ServerConfig(6379, null, "/tmp/redis-files", "dump.rdb", "no", "appendonlydir", "appendonly.aof", "everysec");
+    ServerConfig serverConfig = TestConstants.createDefaultServerConfig();
     CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
 
     byte[] response = handler.handleCommand(List.of(
@@ -32,7 +33,7 @@ class ConfigCommandTest {
 
   @Test
   void testConfigGetDbfilename() {
-    ServerConfig serverConfig = new ServerConfig(6379, null, "/tmp/redis-files", "dump.rdb", "no", "appendonlydir", "appendonly.aof", "everysec");
+    ServerConfig serverConfig = TestConstants.createDefaultServerConfig();
     CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
 
     byte[] response = handler.handleCommand(List.of(

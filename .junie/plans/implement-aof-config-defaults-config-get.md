@@ -5,62 +5,70 @@ sessionId: session-260630-142950-1xk2
 # Requirements
 
 ### Overview & Goals
-The goal of this task is to fix compilation and runtime issues in several test classes caused by missing configuration variables, and to centralize configuration constants to eliminate duplication across the codebase.
+The goal of this task is to fix the remaining test failures and address technical debt in the test suite. Specifically, we need to fix a logical error in `InfoCommandTest`, refactor the `ServerConfig` constructor for better clarity, and eliminate configuration duplication across test classes by centralizing `ServerConfig` creation in `TestConstants`.
 
 ### Scope
 - **In Scope**:
-  - Centralizing configuration defaults in `ServerConfig.java`.
-  - Creating a shared `TestConstants.java` utility for test classes.
-  - Fixing compile errors in `ReplicationPropagationTest`, `ReplicationHandshakeTest`, `InfoCommandTest`, `PsyncCommandTest`, and `UnWatchCommandTest`.
-  - Refactoring `CommandHandlerTest` and `ConfigCommandTest` to use centralized constants.
-  - Ensuring `Main.java` correctly uses these centralized defaults.
+  - Fixing the `role:master` assertion failure in `InfoCommandTest.testInfoReturnsMasterRole`.
+  - Refactoring `ServerConfig` constructor parameter names.
+  - Adding factory methods to `TestConstants.java` for creating test-ready `ServerConfig` instances.
+  - Updating all test classes to use these centralized factory methods.
 - **Out of Scope**:
-  - Implementing actual AOF persistence logic.
-  - Modifying Redis protocol or command handling logic beyond configuration retrieval.
+  - Implementing AOF persistence logic.
+  - Adding new Redis commands.
 
 ### Functional Requirements
-- All tests must compile and pass.
-- `CONFIG GET` must accurately reflect the values set at startup (either defaults or overrides).
-- Duplication of configuration constants in test classes should be eliminated.
+- `InfoCommandTest.testInfoReturnsMasterRole` must pass.
+- All test classes must use `TestConstants` for `ServerConfig` instantiation.
+- `ReplicationPropagationTest` and other replication tests must pass.
+- `ServerConfig` constructor should use clear parameter names instead of default values as names (e.g., `appendonly` instead of `no`).
 
 # Technical Design
 
 ### Current Implementation
-- `ServerConfig.java` has hardcoded defaults and multiple constructors that don't always correctly initialize fields.
-- Many test files attempt to use variables like `dir`, `dbfilename`, and AOF options which are not defined in their scope.
-- `CommandHandlerTest.java` and `ConfigCommandTest.java` have their own hardcoded copies of configuration values.
+- `ServerConfig.java` has a constructor with confusing parameter names like `no` (for `appendonly`).
+- `InfoCommandTest.testInfoReturnsMasterRole` fails because it incorrectly configures the server as a replica but expects a master role response.
+- Multiple test files (`CommandHandlerTest`, `ConfigCommandTest`, `ReplicationPropagationTest`, etc.) duplicate the boilerplate for creating `ServerConfig` instances, often hardcoding values that should be shared.
 
 ### Proposed Changes
 
 #### ServerConfig.java
-- Define `public static final` constants for all default values.
-- Update constructors to ensure all fields are correctly initialized using these constants by default.
-- Refactor to have a primary constructor and a convenience constructor.
+- Rename constructor parameters in the 8-argument constructor:
+  - `no` -> `appendonly`
+  - `appendonlydir` -> `appenddirname`
+  - `appendonlyaof` -> `appendfilename`
+  - `everysec` -> `appendfsync`
 
-#### TestConstants.java (New)
-- Create `src/test/java/redis/TestConstants.java` to house shared constants for tests (e.g., `DIR = "/tmp/redis-files"`, `DBFILENAME = "dump.rdb"`).
-
-#### Main.java
-- Update to use `ServerConfig` constants for flag defaults.
+#### TestConstants.java
+- Add static factory methods to simplify test setup:
+  - `public static ServerConfig createServerConfig(int port, String replicaOf)`: Uses constants for all other fields.
+  - `public static ServerConfig createDefaultServerConfig()`: Uses port 6379 and null `replicaOf`.
 
 #### Test Class Refactoring
-- Update all identified test classes to use `TestConstants` for configuration values instead of local variables or hardcoded strings.
-- Specifically fix: `CommandHandlerTest`, `ConfigCommandTest`, `InfoCommandTest`, `PsyncCommandTest`, `UnWatchCommandTest`, `ReplicationHandshakeTest`, and `ReplicationPropagationTest`.
+- **InfoCommandTest.java**: Fix `testInfoReturnsMasterRole` by passing `null` for `replicaOf`.
+- **All Test Classes**: Replace manual `new ServerConfig(...)` calls with `TestConstants.createServerConfig(...)` or `TestConstants.createDefaultServerConfig()`.
 
 ### File Structure
-- `src/main/java/redis/server/ServerConfig.java`: Centralized defaults.
-- `src/main/java/Main.java`: Uses centralized defaults.
-- `src/test/java/redis/TestConstants.java`: Shared test values.
-- `src/test/java/redis/**/*.java`: Multiple test files updated for consistency and correctness.
+- `src/main/java/redis/server/ServerConfig.java`: Updated constructor.
+- `src/test/java/redis/TestConstants.java`: Added factory methods.
+- `src/test/java/redis/**/*.java`: Multiple test files updated for DRYness and correctness.
 
 # Testing
 
 ### Validation Approach
-- Verify that the project compiles successfully.
-- Run the entire test suite to ensure all tests pass.
-- Manually verify `CONFIG GET` behavior if needed.
+- Execute `mvn test` to ensure all tests pass.
+- Specifically verify `InfoCommandTest` and `ReplicationPropagationTest`.
 
 ### Key Scenarios
-1. **Compilation**: `mvn compile` succeeds without errors in any test class.
-2. **Test Suite**: `mvn test` passes for all configuration and replication tests.
-3. **Consistency**: Changes to a value in `TestConstants` are reflected across all tests using it.
+1. **Master Info**: `CONFIG GET` and `INFO` return correct role for master.
+2. **Replica Info**: `INFO` returns `role:slave` for replicas.
+3. **AOF Config**: `CONFIG GET` return correct default AOF values.
+4. **Replication**: Commands are correctly propagated to replicas with accurate offsets.
+
+## Execution Plan
+
+### ✓ Step 1: Fix `InfoCommandTest.testInfoReturnsMasterRole`
+### ✓ Step 2: Refactor `ServerConfig` constructor parameter names
+### ✓ Step 3: Add factory methods to `TestConstants.java`
+### ✓ Step 4: Update test classes to use factory methods
+### ✓ Step 5: Verify all tests pass

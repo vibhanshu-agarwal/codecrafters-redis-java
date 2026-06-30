@@ -15,16 +15,7 @@ import redis.storage.StoredValue;
 
 class CommandHandlerTest {
 
-  private final ServerConfig serverConfig =
-      new ServerConfig(
-          6379,
-          null,
-          TestConstants.dir,
-          TestConstants.dbfilename,
-          TestConstants.appendonly,
-          TestConstants.appenddirname,
-          TestConstants.appendfilename,
-          TestConstants.appendfsync);
+  private final ServerConfig serverConfig = TestConstants.createDefaultServerConfig();
   private final ReplicationService replicationService = new ReplicationService();
 
   /** Validates PING command returns PONG response */
@@ -843,16 +834,7 @@ class CommandHandlerTest {
   /** Validates CONFIG GET command returns configured RDB persistence values. */
   @Test
   void testHandleConfigGetCommand() {
-    ServerConfig config =
-        new ServerConfig(
-            6379,
-            null,
-            "/tmp/redis-files",
-            "dump.rdb",
-            "no",
-            "appendonlydir",
-            "appendonly.aof",
-            "everysec");
+    ServerConfig config = TestConstants.createDefaultServerConfig();
     CommandHandler handler = new CommandHandler(config, replicationService, null);
     Map<String, StoredValue> storage = new HashMap<>();
 
@@ -882,15 +864,7 @@ class CommandHandlerTest {
   void testHandleInfoCommandAsReplica() {
     CommandHandler handler =
         new CommandHandler(
-            new ServerConfig(
-                6380,
-                "localhost 6379",
-                TestConstants.dir,
-                TestConstants.dbfilename,
-                TestConstants.appendonly,
-                TestConstants.appenddirname,
-                TestConstants.appendfilename,
-                TestConstants.appendfsync),
+            TestConstants.createServerConfig(6380, "localhost 6379"),
             replicationService,
             null);
     Map<String, StoredValue> storage = new HashMap<>();
