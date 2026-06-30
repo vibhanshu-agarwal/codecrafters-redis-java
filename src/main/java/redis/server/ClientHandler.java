@@ -2,6 +2,7 @@ package redis.server;
 
 import redis.command.BlockingCommandCoordinator;
 import redis.command.CommandHandler;
+import redis.persistence.AofPersistence;
 import redis.protocol.RespParser;
 import redis.protocol.RespResponse;
 import redis.storage.StoredValue;
@@ -51,6 +52,11 @@ public class ClientHandler {
             List<byte[]> command;
             while ((command = parser.readCommand()) != null) {
                 String cmdName = new String(command.getFirst(), StandardCharsets.UTF_8).toUpperCase(Locale.ROOT);
+                
+                if (replicationService.isWriteCommand(cmdName) && !serverConfig.isReplica()) {
+                    AofPersistence.appendToAof(serverConfig, command);
+                }
+
                 byte[] response = commandHandler.handleCommand(command, keyValuePairs);
                 
                 if (response != null) {
