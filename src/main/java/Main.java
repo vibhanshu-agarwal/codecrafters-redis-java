@@ -78,6 +78,8 @@ public class Main {
       System.out.println("Failed to load RDB file: " + e.getMessage());
     }
 
+    AofPersistence.replayAof(serverConfig, keyValuePairs, replicationService);
+
     new ReplicationHandshakeHandler(serverConfig, replicationService, keyValuePairs).run();
 
     AofPersistence.initializeAof(serverConfig);
