@@ -2,124 +2,100 @@
 sessionId: session-260630-142950-1xk2
 ---
 
-# Requirements平衡量
+# Requirements
 
 ### Overview & Goals
-The goal of this task is to implement default values for AOF-related configuration options so they can be retrieved using the `CONFIG GET` command. While no actual AOF persistence logic is required at this stage, the server must correctly report the default settings.
+The goal of this task is to allow AOF-related configuration options to be overridden via command-line flags. This extends the previous stage where default values were implemented. The server must now prioritize values provided via flags over the defaults.
 
 ### Scope
 - **In Scope**:
-  - Setting default values for `dir`, `appendonly`, `appenddirname`, `appendfilename`, and `appendfsync`.
-  - Exposing these values via `CONFIG GET`.
-  - Ensuring `dir` defaults to the current working directory at startup.
+  - Parsing command-line flags: `--dir`, `--appendonly`, `--appenddirname`, `--appendfilename`, and `--appendfsync`.
+  - Storing these values in `ServerConfig`.
+  - Exposing the (potentially overridden) values via `CONFIG GET`.
 - **Out of Scope**:
-  - Implementing AOF persistence logic (logging write commands, file rotation, etc.).
-  - Implementing `CONFIG SET` for these options.
-  - Adding CLI flags to override these defaults (unless already present for some).
+  - Implementing AOF persistence logic.
+  - Implementing `CONFIG SET`.
+  - Handling duplicate flags or specific flag ordering (per requirements).
 
 ### Functional Requirements
-- `CONFIG GET dir`: Returns the absolute path of the current working directory (if not explicitly set via `--dir`).
-- `CONFIG GET appendonly`: Returns `"no"`.
-- `CONFIG GET appenddirname`: Returns `"appendonlydir"`.
-- `CONFIG GET appendfilename`: Returns `"appendonly.aof"`.
-- `CONFIG GET appendfsync`: Returns `"everysec"`.
-- All responses must be RESP arrays containing two bulk strings: the option name and its value.
-
+- `CONFIG GET <parameter>`: Returns the value passed via the corresponding command-line flag if present, otherwise returns the default value.
+- Supported flags and their defaults:
+  - `--dir`: Defaults to current working directory.
+  - `--appendonly`: Defaults to `"no"`.
+  - `--appenddirname`: Defaults to `"appendonlydir"`.
+  - `--appendfilename`: Defaults to `"appendonly.aof"`.
+  - `--appendfsync`: Defaults to `"everysec"`.
+- All responses must remain compliant with the RESP array format (two bulk strings).
 
 # Technical Design
 
 ### Current Implementation
-- `ServerConfig` currently stores `port`, `replicaOf`, `dir`, and `dbfilename`.
-- `ConfigCommand` handles `CONFIG GET` by switching on the parameter name and fetching values from `ServerConfig`. It currently supports `dir` and `dbfilename`.
-- `Main.java` parses `--dir` and `--dbfilename` but initializes them to empty strings if not provided.
+- `ServerConfig` stores configuration but AOF fields (`appendonly`, etc.) are currently `final` constants with hardcoded defaults.
+- `Main.java` already parses `--port`, `--dir`, `--dbfilename`, and `--replicaof`.
+- `ConfigCommand` correctly fetches values from `ServerConfig` for all required AOF keys.
 
 ### Proposed Changes
 
 #### ServerConfig.java
-- Update `getDir()` to return the current working directory if not set:
-  ```java
-  public String getDir() {
-    return (dir == null || dir.isEmpty()) ? System.getProperty("user.dir") : dir;
-  }
-  ```
-- Add fields for AOF defaults:
-  ```java
-  private final String appendonly = "no";
-  private final String appenddirname = "appendonlydir";
-  private final String appendfilename = "appendonly.aof";
-  private final String appendfsync = "everysec";
-  ```
-- Add corresponding getters.
-
-#### ConfigCommand.java
-- Update `getValue(String parameter)` to include the new keys:
-  ```java
-  private String getValue(String parameter) {
-    return switch (parameter) {
-      case "dir" -> serverConfig.getDir();
-      case "dbfilename" -> serverConfig.getDbfilename();
-      case "appendonly" -> serverConfig.getAppendonly();
-      case "appenddirname" -> serverConfig.getAppenddirname();
-      case "appendfilename" -> serverConfig.getAppendfilename();
-      case "appendfsync" -> serverConfig.getAppendfsync();
-      default -> null;
-    };
-  }
-  ```
+- Update the constructor to accept the new AOF configuration values.
+- Store these values in fields, replacing the hardcoded defaults.
+- Keep `getDir()` logic for defaulting to `user.dir` if the provided value is empty.
 
 #### Main.java
-- Pass normalized values to `RdbLoader`:
+- Initialize local variables for AOF options with their default values:
   ```java
-  new RdbLoader().load(serverConfig.getDir(), serverConfig.getDbfilename(), keyValuePairs);
+  String appendonly = "no";
+  String appenddirname = "appendonlydir";
+  String appendfilename = "appendonly.aof";
+  String appendfsync = "everysec";
   ```
+- Expand the argument parsing loop to handle the new flags:
+  ```java
+  if ("--appendonly".equals(args[i]) && i + 1 < args.length) {
+    appendonly = args[i + 1];
+  }
+  // ... similar for other flags
+  ```
+- Update `ServerConfig` instantiation to pass all configuration values.
 
 ### File Structure
-- `src/main/java/redis/server/ServerConfig.java`: Updated to store AOF defaults and normalize `dir`.
-- `src/main/java/redis/command/ConfigCommand.java`: Updated to handle new keys in `CONFIG GET`.
-- `src/main/java/Main.java`: Updated to use normalized config values.
-
+- `src/main/java/redis/server/ServerConfig.java`: Updated to accept AOF values in constructor.
+- `src/main/java/Main.java`: Updated to parse new AOF flags.
 
 # Testing
 
 ### Validation Approach
-Verification will be performed by executing `CONFIG GET` for each of the new options and checking the RESP response.
+Verification will be performed by running the server with various combinations of CLI flags and querying the values via `CONFIG GET`.
 
 ### Key Scenarios
-1. **Default `dir`**:
+1. **Default values (no flags)**:
    - Run: `./your_program.sh`
-   - Command: `redis-cli CONFIG GET dir`
-   - Expect: `*2\r\n$3\r\ndir\r\n$<length>\r\n<absolute_path>\r\n`
+   - `CONFIG GET appendonly` -> `no`
+   - `CONFIG GET appenddirname` -> `appendonlydir`
 
-2. **AOF Options**:
-   - Run: `./your_program.sh`
-   - Commands:
-     - `CONFIG GET appendonly` -> `no`
-     - `CONFIG GET appenddirname` -> `appendonlydir`
-     - `CONFIG GET appendfilename` -> `appendonly.aof`
-     - `CONFIG GET appendfsync` -> `everysec`
+2. **Overriding values with flags**:
+   - Run: `./your_program.sh --appendonly yes --appenddirname my_aof_dir --dir /custom/path`
+   - `CONFIG GET appendonly` -> `yes`
+   - `CONFIG GET appenddirname` -> `my_aof_dir`
+   - `CONFIG GET dir` -> `/custom/path`
 
-3. **Explicit `dir`**:
-   - Run: `./your_program.sh --dir /tmp/redis`
-   - Command: `redis-cli CONFIG GET dir`
-   - Expect: `/tmp/redis`
-
+3. **Partial overrides**:
+   - Run: `./your_program.sh --appendfilename custom.aof`
+   - `CONFIG GET appendfilename` -> `custom.aof`
+   - `CONFIG GET appendonly` -> `no` (remains default)
 
 # Delivery Steps
 
-###   Step 1: Add AOF configuration defaults to ServerConfig
-Update `ServerConfig.java` to include the new AOF-related configuration fields and their default values.
+###   Step 1: Update ServerConfig to support AOF configuration parameters
+Modify `ServerConfig.java` to allow initializing AOF-related configuration through its constructor.
 
-- Add private final fields for `appendonly` ("no"), `appenddirname` ("appendonlydir"), `appendfilename` ("appendonly.aof"), and `appendfsync` ("everysec").
-- Update the `getDir()` method to return `System.getProperty("user.dir")` when the configured `dir` is null or empty.
-- Add public getter methods for the new fields.
+- Update the constructor to accept `appendonly`, `appenddirname`, `appendfilename`, and `appendfsync`.
+- Remove the `final` assignment of hardcoded defaults for these fields and initialize them from constructor parameters.
+- Ensure all getters continue to return these fields.
 
-###   Step 2: Update ConfigCommand to expose AOF options
-Modify `ConfigCommand.java` to handle the new configuration parameters in the `CONFIG GET` command.
+###   Step 2: Update Main to parse AOF-related command-line flags
+Update `Main.java` to parse the new flags and pass the values to `ServerConfig`.
 
-- Update the `getValue(String parameter)` method to include cases for `appendonly`, `appenddirname`, `appendfilename`, and `appendfsync`.
-- Ensure each case maps to the corresponding getter in `ServerConfig`.
-
-###   Step 3: Normalize configuration usage in Main
-Update `Main.java` to use the normalized configuration values from `ServerConfig` when initializing the server components.
-
-- Ensure `RdbLoader.load()` is called with `serverConfig.getDir()` and `serverConfig.getDbfilename()` instead of the raw command-line arguments. This ensures that the current working directory default is correctly applied during startup.
+- Define variables for the new AOF options, initialized with their default values (`"no"`, `"appendonlydir"`, etc.).
+- Update the command-line argument loop to detect and parse `--appendonly`, `--appenddirname`, `--appendfilename`, and `--appendfsync`.
+- Pass these variables to the `ServerConfig` constructor when it is instantiated.

@@ -17,7 +17,7 @@ class PsyncCommandTest {
 
     @Test
     void testExecute() {
-        ServerConfig serverConfig = new ServerConfig(6379, null);
+        ServerConfig serverConfig = new ServerConfig(6379, null, dir, dbfilename, appendonly, appenddirname, appendfilename, appendfsync);
         PsyncCommand command = new PsyncCommand(serverConfig, new ReplicationService());
         Map<String, StoredValue> storage = new HashMap<>();
         List<byte[]> args = new ArrayList<>();

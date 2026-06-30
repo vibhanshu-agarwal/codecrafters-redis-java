@@ -12,7 +12,6 @@ import java.net.Socket;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import static org.junit.jupiter.api.Assertions.assertArrayEquals;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -22,7 +21,7 @@ class ReplicationHandshakeTest {
     @Test
     void testPerformHandshake() throws IOException {
         // Setup ServerConfig
-        ServerConfig config = new ServerConfig(6380, "localhost 6379");
+        ServerConfig config = new ServerConfig(6380, "localhost 6379", dir, dbfilename, appendonly, appenddirname, appendfilename, appendfsync);
         ReplicationHandshakeHandler handler = new ReplicationHandshakeHandler(config, new ReplicationService(), new HashMap<>());
 
         // Prepare mock responses from master (including RDB file)

@@ -18,7 +18,7 @@ public class ServerConfig {
   private final String appendfilename = "appendonly.aof";
   private final String appendfsync = "everysec";
 
-  public ServerConfig(int port, String replicaOf) {
+  public ServerConfig(int port, String replicaOf, String dir, String dbfilename, String appendonly, String appenddirname, String appendfilename, String appendfsync) {
     this(port, replicaOf, "", "");
   }
 

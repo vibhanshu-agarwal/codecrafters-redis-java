@@ -15,7 +15,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class CommandHandlerTest {
 
-    private final ServerConfig serverConfig = new ServerConfig(6379, null);
+    private final ServerConfig serverConfig = new ServerConfig(6379, null, dir, dbfilename, appendonly, appenddirname, appendfilename, appendfsync);
     private final ReplicationService replicationService = new ReplicationService();
 
     /**
@@ -905,7 +905,7 @@ class CommandHandlerTest {
      */
     @Test
     void testHandleInfoCommandAsReplica() {
-        CommandHandler handler = new CommandHandler(new ServerConfig(6380, "localhost 6379"), replicationService, null);
+        CommandHandler handler = new CommandHandler(new ServerConfig(6380, "localhost 6379", dir, dbfilename, appendonly, appenddirname, appendfilename, appendfsync), replicationService, null);
         Map<String, StoredValue> storage = new HashMap<>();
         List<byte[]> parts = new ArrayList<>();
         parts.add("INFO".getBytes(StandardCharsets.UTF_8));

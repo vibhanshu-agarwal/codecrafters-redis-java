@@ -23,6 +23,11 @@ public class Main {
     String replicaOf = null;
     String dir = "";
     String dbfilename = "";
+    String appendonly = "no";
+    String appenddirname = "appendonlydir";
+    String appendfilename = "appendonly.aof";
+    String appendfsync = "everysec";
+
     for (int i = 0; i < args.length; i++) {
       if ("--port".equals(args[i]) && i + 1 < args.length) {
         port = Integer.parseInt(args[i + 1]);
@@ -32,6 +37,18 @@ public class Main {
       }
       if ("--dbfilename".equals(args[i]) && i + 1 < args.length) {
         dbfilename = args[i + 1];
+      }
+      if ("--appendonly".equals(args[i]) && i + 1 < args.length) {
+        appendonly = args[i + 1];
+      }
+      if ("--appenddirname".equals(args[i]) && i + 1 < args.length) {
+        appenddirname = args[i + 1];
+      }
+      if ("--appendfilename".equals(args[i]) && i + 1 < args.length) {
+        appendfilename = args[i + 1];
+      }
+      if ("--appendfsync".equals(args[i]) && i + 1 < args.length) {
+        appendfsync = args[i + 1];
       }
       // Parse --replicaof flag (value is "<host> <port>") alongside --port.
       if ("--replicaof".equals(args[i]) && i + 1 < args.length) {
@@ -43,7 +60,16 @@ public class Main {
       }
     }
 
-    ServerConfig serverConfig = new ServerConfig(port, replicaOf, dir, dbfilename);
+    ServerConfig serverConfig =
+        new ServerConfig(
+            port,
+            replicaOf,
+            dir,
+            dbfilename,
+            appendonly,
+            appenddirname,
+            appendfilename,
+            appendfsync);
     ReplicationService replicationService = new ReplicationService();
     try {
       new RdbLoader().load(serverConfig.getDir(), serverConfig.getDbfilename(), keyValuePairs);

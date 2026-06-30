@@ -16,7 +16,7 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class UnWatchCommandTest {
-    private final ServerConfig serverConfig = new ServerConfig(6379, null);
+    private final ServerConfig serverConfig = new ServerConfig(6379, null, dir, dbfilename, appendonly, appenddirname, appendfilename, appendfsync);
     private final ReplicationService replicationService = new ReplicationService();
     private TransactionState transactionState;
     private UnWatchCommand unWatchCommand;

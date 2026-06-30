@@ -18,7 +18,7 @@ class ReplicationPropagationTest {
 
     @Test
     void testCommandPropagation() throws IOException, InterruptedException {
-        ServerConfig masterConfig = new ServerConfig(6379, null);
+        ServerConfig masterConfig = new ServerConfig(6379, null, dir, dbfilename, appendonly, appenddirname, appendfilename, appendfsync);
         ReplicationService replicationService = new ReplicationService();
         Map<String, StoredValue> keyValuePairs = new ConcurrentHashMap<>();
 
@@ -70,7 +70,7 @@ class ReplicationPropagationTest {
     @Test
     void testReplicaProcessing() throws IOException, InterruptedException {
         Map<String, StoredValue> keyValuePairs = new ConcurrentHashMap<>();
-        ServerConfig replicaConfig = new ServerConfig(6380, "localhost 6379");
+        ServerConfig replicaConfig = new ServerConfig(6380, "localhost 6379", dir, dbfilename, appendonly, appenddirname, appendfilename, appendfsync);
         
         // Mock master connection
         // Master sends SET foo bar
@@ -100,7 +100,7 @@ class ReplicationPropagationTest {
     @Test
     void testReplicaGetAckResponse() throws IOException {
         Map<String, StoredValue> keyValuePairs = new ConcurrentHashMap<>();
-        ServerConfig replicaConfig = new ServerConfig(6380, "localhost 6379");
+        ServerConfig replicaConfig = new ServerConfig(6380, "localhost 6379", dir, dbfilename, appendonly, appenddirname, appendfilename, appendfsync);
 
         // Master sends REPLCONF GETACK *
         String masterData = "*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n";
@@ -139,7 +139,7 @@ class ReplicationPropagationTest {
       @Test
       void testReplicaOffsetSequence() throws IOException {
         Map<String, StoredValue> keyValuePairs = new ConcurrentHashMap<>();
-        ServerConfig replicaConfig = new ServerConfig(6380, "localhost 6379");
+        ServerConfig replicaConfig = new ServerConfig(6380, "localhost 6379", dir, dbfilename, appendonly, appenddirname, appendfilename, appendfsync);
 
         // Sequence: GETACK (0), PING, GETACK (51), SET (29), SET (29), GETACK (146)
         String getAck = "*3\r\n$8\r\nREPLCONF\r\n$6\r\nGETACK\r\n$1\r\n*\r\n"; // 37 bytes
