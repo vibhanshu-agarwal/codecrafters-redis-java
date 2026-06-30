@@ -1,11 +1,9 @@
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import redis.persistence.AofPersistence;
 import redis.server.ClientHandler;
 import redis.server.ReplicationHandshakeHandler;
 import redis.server.ReplicationService;
@@ -82,14 +80,7 @@ public class Main {
 
     new ReplicationHandshakeHandler(serverConfig, replicationService, keyValuePairs).run();
 
-    if ("yes".equals(serverConfig.getAppendonly())) {
-      try {
-        Path aofDirPath = Paths.get(serverConfig.getDir(), serverConfig.getAppenddirname());
-        Files.createDirectories(aofDirPath);
-      } catch (IOException e) {
-        System.out.println("Failed to create append-only directory: " + e.getMessage());
-      }
-    }
+    AofPersistence.initializeAof(serverConfig);
 
     try (ServerSocket serverSocket = new ServerSocket(port)) {
 
