@@ -1,6 +1,7 @@
 package redis.command;
 
 import org.junit.jupiter.api.Test;
+import redis.TestConstants;
 import redis.server.ServerConfig;
 import redis.storage.StoredValue;
 
@@ -19,7 +20,15 @@ class InfoCommandTest {
      */
     @Test
     void testInfoReturnsMasterRole() {
-        InfoCommand command = new InfoCommand(new ServerConfig(6379, null, dir, dbfilename, appendonly, appenddirname, appendfilename, appendfsync));
+        InfoCommand command = new InfoCommand(new ServerConfig(
+                6380,
+                "localhost 6379",
+                TestConstants.dir,
+                TestConstants.dbfilename,
+                TestConstants.appendonly,
+                TestConstants.appenddirname,
+                TestConstants.appendfilename,
+                TestConstants.appendfsync));
         Map<String, StoredValue> storage = new HashMap<>();
 
         byte[] response = command.execute(Collections.emptyList(), storage);
@@ -34,7 +43,15 @@ class InfoCommandTest {
      */
     @Test
     void testInfoReturnsSlaveRole() {
-        InfoCommand command = new InfoCommand(new ServerConfig(6380, "localhost 6379", dir, dbfilename, appendonly, appenddirname, appendfilename, appendfsync));
+        InfoCommand command = new InfoCommand(new ServerConfig(
+                6380,
+                "localhost 6379",
+                TestConstants.dir,
+                TestConstants.dbfilename,
+                TestConstants.appendonly,
+                TestConstants.appenddirname,
+                TestConstants.appendfilename,
+                TestConstants.appendfsync));
         Map<String, StoredValue> storage = new HashMap<>();
 
         byte[] response = command.execute(Collections.emptyList(), storage);

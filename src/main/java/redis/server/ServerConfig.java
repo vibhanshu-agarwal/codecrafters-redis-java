@@ -13,20 +13,24 @@ public class ServerConfig {
   private final String masterReplid = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb";
   private final AtomicLong masterReplOffset = new AtomicLong(0);
 
-  private final String appendonly = "no";
-  private final String appenddirname = "appendonlydir";
-  private final String appendfilename = "appendonly.aof";
-  private final String appendfsync = "everysec";
+  private String appendonly;
+  private String appenddirname;
+  private String appendfilename;
+  private String appendfsync;
 
-  public ServerConfig(int port, String replicaOf, String dir, String dbfilename, String appendonly, String appenddirname, String appendfilename, String appendfsync) {
-    this(port, replicaOf, "", "");
+  public ServerConfig(int port, String replicaOf) {
+    this(port, replicaOf, "", "", "no", "appendonlydir", "appendonly.aof", "everysec");
   }
 
-  public ServerConfig(int port, String replicaOf, String dir, String dbfilename) {
+  public ServerConfig(int port, String replicaOf, String dir, String dbfilename, String no, String appendonlydir, String appendonlyaof, String everysec) {
     this.port = port;
     this.replicaOf = replicaOf;
     this.dir = dir;
     this.dbfilename = dbfilename;
+    this.appendonly = no;
+    this.appenddirname = appendonlydir;
+    this.appendfilename = appendonlyaof;
+    this.appendfsync = everysec;
   }
 
   public boolean isReplica() {

@@ -18,7 +18,7 @@ class ConfigCommandTest {
 
   @Test
   void testConfigGetDir() {
-    ServerConfig serverConfig = new ServerConfig(6379, null, "/tmp/redis-files", "dump.rdb");
+    ServerConfig serverConfig = new ServerConfig(6379, null, "/tmp/redis-files", "dump.rdb", "no", "appendonlydir", "appendonly.aof", "everysec");
     CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
 
     byte[] response = handler.handleCommand(List.of(
@@ -32,7 +32,7 @@ class ConfigCommandTest {
 
   @Test
   void testConfigGetDbfilename() {
-    ServerConfig serverConfig = new ServerConfig(6379, null, "/tmp/redis-files", "dump.rdb");
+    ServerConfig serverConfig = new ServerConfig(6379, null, "/tmp/redis-files", "dump.rdb", "no", "appendonlydir", "appendonly.aof", "everysec");
     CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
 
     byte[] response = handler.handleCommand(List.of(

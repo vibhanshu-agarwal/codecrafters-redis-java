@@ -2,6 +2,7 @@ package redis.command;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import redis.TestConstants;
 import redis.server.ReplicationService;
 import redis.server.ServerConfig;
 import redis.storage.KeyModificationTracker;
@@ -16,7 +17,15 @@ import java.util.Map;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class UnWatchCommandTest {
-    private final ServerConfig serverConfig = new ServerConfig(6379, null, dir, dbfilename, appendonly, appenddirname, appendfilename, appendfsync);
+    ServerConfig serverConfig =new ServerConfig(
+            6379,
+            null,
+            TestConstants.dir,
+            TestConstants.dbfilename,
+            TestConstants.appendonly,
+            TestConstants.appenddirname,
+            TestConstants.appendfilename,
+            TestConstants.appendfsync);
     private final ReplicationService replicationService = new ReplicationService();
     private TransactionState transactionState;
     private UnWatchCommand unWatchCommand;
