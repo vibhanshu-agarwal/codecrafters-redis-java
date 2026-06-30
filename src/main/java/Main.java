@@ -46,7 +46,7 @@ public class Main {
     ServerConfig serverConfig = new ServerConfig(port, replicaOf, dir, dbfilename);
     ReplicationService replicationService = new ReplicationService();
     try {
-      new RdbLoader().load(dir, dbfilename, keyValuePairs);
+      new RdbLoader().load(serverConfig.getDir(), serverConfig.getDbfilename(), keyValuePairs);
     } catch (IOException e) {
       System.out.println("Failed to load RDB file: " + e.getMessage());
     }
@@ -61,7 +61,8 @@ public class Main {
       // Wait for connection from client.
       while (true) {
         Socket clientSocket = serverSocket.accept();
-        Thread.startVirtualThread(() -> handleClient(clientSocket, serverConfig, keyValuePairs, replicationService));
+        Thread.startVirtualThread(
+            () -> handleClient(clientSocket, serverConfig, keyValuePairs, replicationService));
       }
     } catch (IOException e) {
       // Add a sout
@@ -70,7 +71,10 @@ public class Main {
   }
 
   private static void handleClient(
-      Socket clientSocket, ServerConfig serverConfig, Map<String, StoredValue> keyValuePairs, ReplicationService replicationService) {
+      Socket clientSocket,
+      ServerConfig serverConfig,
+      Map<String, StoredValue> keyValuePairs,
+      ReplicationService replicationService) {
     new ClientHandler(clientSocket, serverConfig, keyValuePairs, replicationService).handle();
   }
 }

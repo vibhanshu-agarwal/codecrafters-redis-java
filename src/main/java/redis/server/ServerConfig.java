@@ -13,6 +13,11 @@ public class ServerConfig {
   private final String masterReplid = "8371b4fb1155b71f4a04d3e1bc3e18c4a990aeeb";
   private final AtomicLong masterReplOffset = new AtomicLong(0);
 
+  private final String appendonly = "no";
+  private final String appenddirname = "appendonlydir";
+  private final String appendfilename = "appendonly.aof";
+  private final String appendfsync = "everysec";
+
   public ServerConfig(int port, String replicaOf) {
     this(port, replicaOf, "", "");
   }
@@ -42,7 +47,7 @@ public class ServerConfig {
   }
 
   public String getDir() {
-    return dir;
+    return Objects.isNull(dir) || dir.isEmpty() ? System.getProperty("user.dir") : dir;
   }
 
   public String getDbfilename() {
@@ -59,5 +64,21 @@ public class ServerConfig {
 
   public void setMasterReplOffset(long offset) {
     this.masterReplOffset.set(offset);
+  }
+
+  public String getAppendonly() {
+    return appendonly;
+  }
+
+  public String getAppenddirname() {
+    return appenddirname;
+  }
+
+  public String getAppendfilename() {
+    return appendfilename;
+  }
+
+  public String getAppendfsync() {
+    return appendfsync;
   }
 }

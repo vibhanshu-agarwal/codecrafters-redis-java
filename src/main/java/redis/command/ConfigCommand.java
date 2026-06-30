@@ -48,6 +48,10 @@ public class ConfigCommand implements Command {
     return switch (parameter) {
       case "dir" -> serverConfig.getDir();
       case "dbfilename" -> serverConfig.getDbfilename();
+      case "appendonly" -> serverConfig.getAppendonly();
+      case "appenddirname" -> serverConfig.getAppenddirname();
+      case "appendfilename" -> serverConfig.getAppendfilename();
+      case "appendfsync" -> serverConfig.getAppendfsync();
       default -> null;
     };
   }
