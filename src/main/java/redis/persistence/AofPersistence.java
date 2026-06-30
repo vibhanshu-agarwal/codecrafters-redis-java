@@ -17,6 +17,10 @@ public class AofPersistence {
                 if (Files.notExists(aofFilePath)) {
                     Files.createFile(aofFilePath);
                 }
+
+                Path manifestFilePath = aofDirPath.resolve(serverConfig.getAppendfilename() + ".manifest");
+                String manifestContent = String.format("file %s.1.incr.aof seq 1 type i\n", serverConfig.getAppendfilename());
+                Files.writeString(manifestFilePath, manifestContent);
             } catch (IOException e) {
                 System.out.println("Failed to initialize AOF: " + e.getMessage());
             }

@@ -33,5 +33,12 @@ public class AofPersistenceTest {
         
         // Assertions should now pass
         assertTrue(Files.exists(aofFilePath), "AOF file should be created");
+
+        Path manifestFilePath = aofDirPath.resolve(appendfilename + ".manifest");
+        assertTrue(Files.exists(manifestFilePath), "Manifest file should be created");
+
+        String manifestContent = Files.readString(manifestFilePath);
+        String expectedContent = "file " + appendfilename + ".1.incr.aof seq 1 type i\n";
+        assertTrue(manifestContent.equals(expectedContent), "Manifest content should match: expected [" + expectedContent + "], got [" + manifestContent + "]");
     }
 }
