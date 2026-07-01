@@ -19,7 +19,7 @@ public class CommandHandler {
 
   /** Registers supported commands with argument validation logic */
   public CommandHandler(ServerConfig serverConfig, ReplicationService replicationService, OutputStream clientOutput) {
-    commands.put("PING", new PingCommand());
+    commands.put("PING", new PingCommand(subscribeCommand));
     commands.put("ECHO", new EchoCommand());
     commands.put("SET", new SetCommand());
     commands.put("GET", new GetCommand());

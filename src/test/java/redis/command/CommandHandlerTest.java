@@ -1015,4 +1015,24 @@ class CommandHandlerTest {
     String expected = "*3\r\n$9\r\nsubscribe\r\n$6\r\nmychan\r\n:1\r\n";
     assertEquals(expected, new String(response, StandardCharsets.UTF_8));
   }
+
+  /** Validates PING command returns array response when in subscribed mode */
+  @Test
+  void testHandlePingInSubscribedMode() {
+    CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
+    Map<String, StoredValue> storage = new HashMap<>();
+
+    // Subscribe first
+    List<byte[]> subscribeParts = new ArrayList<>();
+    subscribeParts.add("SUBSCRIBE".getBytes(StandardCharsets.UTF_8));
+    subscribeParts.add("foo".getBytes(StandardCharsets.UTF_8));
+    handler.handleCommand(subscribeParts, storage);
+
+    // PING
+    List<byte[]> pingParts = new ArrayList<>();
+    pingParts.add("PING".getBytes(StandardCharsets.UTF_8));
+
+    byte[] response = handler.handleCommand(pingParts, storage);
+    assertEquals("*2\r\n$4\r\npong\r\n$0\r\n\r\n", new String(response, StandardCharsets.UTF_8));
+  }
 }
