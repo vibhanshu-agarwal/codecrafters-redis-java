@@ -44,6 +44,7 @@ public class CommandHandler {
     commands.put("REPLCONF", new ReplConfCommand(serverConfig, replicationService, clientOutput));
     commands.put("PSYNC", new PsyncCommand(serverConfig, replicationService));
     commands.put("WAIT", new WaitCommand(replicationService));
+    commands.put("SUBSCRIBE", new SubscribeCommand());
   }
 
   /**

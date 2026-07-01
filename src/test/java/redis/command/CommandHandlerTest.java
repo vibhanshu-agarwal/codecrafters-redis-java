@@ -1001,4 +1001,18 @@ class CommandHandlerTest {
     byte[] response = futureResponse.get(2, java.util.concurrent.TimeUnit.SECONDS);
     assertEquals(":1\r\n", new String(response, StandardCharsets.UTF_8));
   }
+
+  /** Validates SUBSCRIBE command returns the correct subscription response */
+  @Test
+  void testHandleSubscribeCommand() {
+    CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
+    Map<String, StoredValue> storage = new HashMap<>();
+    List<byte[]> parts = new ArrayList<>();
+    parts.add("SUBSCRIBE".getBytes(StandardCharsets.UTF_8));
+    parts.add("mychan".getBytes(StandardCharsets.UTF_8));
+
+    byte[] response = handler.handleCommand(parts, storage);
+    String expected = "*3\r\n$9\r\nsubscribe\r\n$6\r\nmychan\r\n:1\r\n";
+    assertEquals(expected, new String(response, StandardCharsets.UTF_8));
+  }
 }
