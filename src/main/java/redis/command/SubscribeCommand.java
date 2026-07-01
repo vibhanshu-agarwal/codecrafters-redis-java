@@ -13,15 +13,17 @@ import java.util.Set;
 public class SubscribeCommand implements Command {
   private final redis.server.PubSubService pubSubService;
   private final String clientId;
+  private final redis.server.PubSubService.Subscriber subscriber;
   private final Set<String> subscribedChannels = new HashSet<>();
 
   public SubscribeCommand() {
-    this(new redis.server.PubSubService(), "test-client");
+    this(new redis.server.PubSubService(), "test-client", (channel, message) -> {});
   }
 
-  public SubscribeCommand(redis.server.PubSubService pubSubService, String clientId) {
+  public SubscribeCommand(redis.server.PubSubService pubSubService, String clientId, redis.server.PubSubService.Subscriber subscriber) {
     this.pubSubService = pubSubService;
     this.clientId = clientId;
+    this.subscriber = subscriber;
   }
 
   /**
@@ -46,7 +48,7 @@ public class SubscribeCommand implements Command {
     for (byte[] arg : args) {
       String channel = new String(arg, StandardCharsets.UTF_8);
       subscribedChannels.add(channel);
-      pubSubService.subscribe(clientId, channel);
+      pubSubService.subscribe(clientId, channel, subscriber);
 
       List<byte[]> singleResponse = new ArrayList<>();
       singleResponse.add(RespResponse.bulkString("subscribe"));

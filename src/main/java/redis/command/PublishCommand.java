@@ -22,10 +22,9 @@ public class PublishCommand implements Command {
         }
 
         String channel = new String(args.get(0), StandardCharsets.UTF_8);
-        // The message is ignored for now as per requirements
-        // byte[] message = args.get(1);
+        byte[] message = args.get(1);
 
-        int subscriberCount = pubSubService.getSubscriberCount(channel);
+        int subscriberCount = pubSubService.publish(channel, message);
 
         return RespResponse.integer(subscriberCount);
     }

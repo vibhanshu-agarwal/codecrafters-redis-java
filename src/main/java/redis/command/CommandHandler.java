@@ -24,7 +24,22 @@ public class CommandHandler {
 
   /** Registers supported commands with argument validation logic */
   public CommandHandler(ServerConfig serverConfig, ReplicationService replicationService, OutputStream clientOutput, redis.server.PubSubService pubSubService, String clientId) {
-    this.subscribeCommand = new SubscribeCommand(pubSubService, clientId);
+    this.subscribeCommand = new SubscribeCommand(pubSubService, clientId, (channel, message) -> {
+      byte[] marshalled = RespResponse.marshalledArray(List.of(
+          RespResponse.bulkString("message"),
+          RespResponse.bulkString(channel),
+          RespResponse.bulkString(message)
+      ));
+      BlockingCommandCoordinator.lock().lock();
+      try {
+        clientOutput.write(marshalled);
+        clientOutput.flush();
+      } catch (Exception e) {
+        System.out.println("Error sending message to client " + clientId + ": " + e.getMessage());
+      } finally {
+        BlockingCommandCoordinator.lock().unlock();
+      }
+    });
     commands.put("PING", new PingCommand(subscribeCommand));
     commands.put("ECHO", new EchoCommand());
     commands.put("SET", new SetCommand());
