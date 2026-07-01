@@ -18,12 +18,18 @@ public class ClientHandler {
     private final Map<String, StoredValue> keyValuePairs;
     private final ServerConfig serverConfig;
     private final ReplicationService replicationService;
+    private final PubSubService pubSubService;
 
     public ClientHandler(Socket clientSocket, ServerConfig serverConfig, Map<String, StoredValue> keyValuePairs, ReplicationService replicationService) {
+        this(clientSocket, serverConfig, keyValuePairs, replicationService, new PubSubService());
+    }
+
+    public ClientHandler(Socket clientSocket, ServerConfig serverConfig, Map<String, StoredValue> keyValuePairs, ReplicationService replicationService, PubSubService pubSubService) {
         this.clientSocket = clientSocket;
         this.serverConfig = serverConfig;
         this.keyValuePairs = keyValuePairs;
         this.replicationService = replicationService;
+        this.pubSubService = pubSubService;
     }
 
     /**
@@ -45,9 +51,11 @@ public class ClientHandler {
      * or produce error responses for invalid or malformed commands.
      */
     public void handle() {
+        String remoteAddress = clientSocket.getRemoteSocketAddress() != null ? clientSocket.getRemoteSocketAddress().toString() : "unknown";
+        String clientId = remoteAddress + "-" + System.nanoTime();
         try (clientSocket; var inputStream = clientSocket.getInputStream(); var outputStream = clientSocket.getOutputStream()) {
             RespParser parser = new RespParser(inputStream);
-            CommandHandler commandHandler = new CommandHandler(serverConfig, replicationService, outputStream);
+            CommandHandler commandHandler = new CommandHandler(serverConfig, replicationService, outputStream, pubSubService, clientId);
 
             List<byte[]> command;
             while ((command = parser.readCommand()) != null) {
@@ -79,6 +87,8 @@ public class ClientHandler {
             }
         } catch (Exception e) {
             System.out.println("Client handler error: " + e.getMessage());
+        } finally {
+            pubSubService.unsubscribeAll(clientId);
         }
     }
 }

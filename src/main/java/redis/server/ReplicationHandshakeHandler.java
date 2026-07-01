@@ -15,14 +15,24 @@ public class ReplicationHandshakeHandler {
   private final ServerConfig serverConfig;
   private final ReplicationService replicationService;
   private final Map<String, StoredValue> keyValuePairs;
+  private final PubSubService pubSubService;
 
   public ReplicationHandshakeHandler(
       ServerConfig serverConfig,
       ReplicationService replicationService,
       Map<String, StoredValue> keyValuePairs) {
+    this(serverConfig, replicationService, keyValuePairs, new PubSubService());
+  }
+
+  public ReplicationHandshakeHandler(
+      ServerConfig serverConfig,
+      ReplicationService replicationService,
+      Map<String, StoredValue> keyValuePairs,
+      PubSubService pubSubService) {
     this.serverConfig = serverConfig;
     this.replicationService = replicationService;
     this.keyValuePairs = keyValuePairs;
+    this.pubSubService = pubSubService;
   }
 
   public void run() {
@@ -76,7 +86,7 @@ public class ReplicationHandshakeHandler {
     var inputStream = masterSocket.getInputStream();
     var outputStream = masterSocket.getOutputStream();
     RespParser parser = new RespParser(inputStream);
-    CommandHandler commandHandler = new CommandHandler(serverConfig, replicationService, outputStream);
+    CommandHandler commandHandler = new CommandHandler(serverConfig, replicationService, outputStream, pubSubService, "master-" + masterSocket.getRemoteSocketAddress());
     long cumulativeOffset = 0;
 
     List<byte[]> parts;

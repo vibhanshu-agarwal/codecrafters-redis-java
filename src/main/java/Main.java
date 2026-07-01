@@ -5,6 +5,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import redis.persistence.AofPersistence;
 import redis.server.ClientHandler;
+import redis.server.PubSubService;
 import redis.server.ReplicationHandshakeHandler;
 import redis.server.ReplicationService;
 import redis.server.ServerConfig;
@@ -72,15 +73,16 @@ public class Main {
             appendfilename,
             appendfsync);
     ReplicationService replicationService = new ReplicationService();
+    PubSubService pubSubService = new PubSubService();
     try {
       new RdbLoader().load(serverConfig.getDir(), serverConfig.getDbfilename(), keyValuePairs);
     } catch (IOException e) {
       System.out.println("Failed to load RDB file: " + e.getMessage());
     }
 
-    AofPersistence.replayAof(serverConfig, keyValuePairs, replicationService);
+    AofPersistence.replayAof(serverConfig, keyValuePairs, replicationService, pubSubService);
 
-    new ReplicationHandshakeHandler(serverConfig, replicationService, keyValuePairs).run();
+    new ReplicationHandshakeHandler(serverConfig, replicationService, keyValuePairs, pubSubService).run();
 
     AofPersistence.initializeAof(serverConfig);
 
@@ -93,7 +95,7 @@ public class Main {
       while (true) {
         Socket clientSocket = serverSocket.accept();
         Thread.startVirtualThread(
-            () -> handleClient(clientSocket, serverConfig, keyValuePairs, replicationService));
+            () -> handleClient(clientSocket, serverConfig, keyValuePairs, replicationService, pubSubService));
       }
     } catch (IOException e) {
       // Add a sout
@@ -105,7 +107,8 @@ public class Main {
       Socket clientSocket,
       ServerConfig serverConfig,
       Map<String, StoredValue> keyValuePairs,
-      ReplicationService replicationService) {
-    new ClientHandler(clientSocket, serverConfig, keyValuePairs, replicationService).handle();
+      ReplicationService replicationService,
+      PubSubService pubSubService) {
+    new ClientHandler(clientSocket, serverConfig, keyValuePairs, replicationService, pubSubService).handle();
   }
 }

@@ -11,7 +11,18 @@ import java.util.Map;
 import java.util.Set;
 
 public class SubscribeCommand implements Command {
+  private final redis.server.PubSubService pubSubService;
+  private final String clientId;
   private final Set<String> subscribedChannels = new HashSet<>();
+
+  public SubscribeCommand() {
+    this(new redis.server.PubSubService(), "test-client");
+  }
+
+  public SubscribeCommand(redis.server.PubSubService pubSubService, String clientId) {
+    this.pubSubService = pubSubService;
+    this.clientId = clientId;
+  }
 
   /**
    * Executes the subscribe command, registering the provided channels for subscription
@@ -35,6 +46,7 @@ public class SubscribeCommand implements Command {
     for (byte[] arg : args) {
       String channel = new String(arg, StandardCharsets.UTF_8);
       subscribedChannels.add(channel);
+      pubSubService.subscribe(clientId, channel);
 
       List<byte[]> singleResponse = new ArrayList<>();
       singleResponse.add(RespResponse.bulkString("subscribe"));

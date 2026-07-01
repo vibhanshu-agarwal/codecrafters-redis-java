@@ -15,10 +15,16 @@ import java.util.Map;
 public class CommandHandler {
   private final Map<String, Command> commands = new HashMap<>();
   private final TransactionState transactionState = new TransactionState();
-  private final SubscribeCommand subscribeCommand = new SubscribeCommand();
+  private final SubscribeCommand subscribeCommand;
 
   /** Registers supported commands with argument validation logic */
   public CommandHandler(ServerConfig serverConfig, ReplicationService replicationService, OutputStream clientOutput) {
+    this(serverConfig, replicationService, clientOutput, new redis.server.PubSubService(), "test-client");
+  }
+
+  /** Registers supported commands with argument validation logic */
+  public CommandHandler(ServerConfig serverConfig, ReplicationService replicationService, OutputStream clientOutput, redis.server.PubSubService pubSubService, String clientId) {
+    this.subscribeCommand = new SubscribeCommand(pubSubService, clientId);
     commands.put("PING", new PingCommand(subscribeCommand));
     commands.put("ECHO", new EchoCommand());
     commands.put("SET", new SetCommand());
@@ -46,6 +52,7 @@ public class CommandHandler {
     commands.put("PSYNC", new PsyncCommand(serverConfig, replicationService));
     commands.put("WAIT", new WaitCommand(replicationService));
     commands.put("SUBSCRIBE", subscribeCommand);
+    commands.put("PUBLISH", new PublishCommand(pubSubService));
   }
 
   /**

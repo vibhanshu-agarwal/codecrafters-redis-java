@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import redis.TestConstants;
+import redis.server.PubSubService;
 import redis.server.ReplicationService;
 import redis.server.ServerConfig;
 import redis.storage.StoredValue;
@@ -1034,5 +1035,35 @@ class CommandHandlerTest {
 
     byte[] response = handler.handleCommand(pingParts, storage);
     assertEquals("*2\r\n$4\r\npong\r\n$0\r\n\r\n", new String(response, StandardCharsets.UTF_8));
+  }
+
+  /** Validates PUBLISH command returns the number of subscribers */
+  @Test
+  void testHandlePublishCommand() {
+    PubSubService pubSubService = new PubSubService();
+    CommandHandler handler1 =
+        new CommandHandler(serverConfig, replicationService, null, pubSubService, "client1");
+    CommandHandler handler2 =
+        new CommandHandler(serverConfig, replicationService, null, pubSubService, "client2");
+    Map<String, StoredValue> storage = new HashMap<>();
+
+    // PUBLISH with no subscribers
+    List<byte[]> publishParts =
+        List.of(
+            "PUBLISH".getBytes(StandardCharsets.UTF_8),
+            "foo".getBytes(StandardCharsets.UTF_8),
+            "msg".getBytes(StandardCharsets.UTF_8));
+    byte[] response1 = handler1.handleCommand(publishParts, storage);
+    assertEquals(":0\r\n", new String(response1, StandardCharsets.UTF_8));
+
+    // Client 2 subscribes to foo
+    List<byte[]> subscribeParts =
+        List.of(
+            "SUBSCRIBE".getBytes(StandardCharsets.UTF_8), "foo".getBytes(StandardCharsets.UTF_8));
+    handler2.handleCommand(subscribeParts, storage);
+
+    // PUBLISH again
+    byte[] response2 = handler1.handleCommand(publishParts, storage);
+    assertEquals(":1\r\n", new String(response2, StandardCharsets.UTF_8));
   }
 }

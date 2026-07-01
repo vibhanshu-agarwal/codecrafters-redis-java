@@ -48,7 +48,8 @@ public class AofPersistence {
   public static void replayAof(
       ServerConfig serverConfig,
       Map<String, StoredValue> keyValuePairs,
-      ReplicationService replicationService) {
+      ReplicationService replicationService,
+      redis.server.PubSubService pubSubService) {
     // Skip replay if AOF persistence is disabled
     if (!"yes".equals(serverConfig.getAppendonly())) {
       return;
@@ -72,7 +73,7 @@ public class AofPersistence {
               // Use a null output stream as we don't need to send responses back during replay
               CommandHandler commandHandler =
                   new CommandHandler(
-                      serverConfig, replicationService, OutputStream.nullOutputStream());
+                      serverConfig, replicationService, OutputStream.nullOutputStream(), pubSubService, "aof-replay");
 
               List<byte[]> command;
               // Parse each RESP-encoded command and apply it to the key-value store
