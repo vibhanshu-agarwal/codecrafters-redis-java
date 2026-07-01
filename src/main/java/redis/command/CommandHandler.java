@@ -67,6 +67,7 @@ public class CommandHandler {
     commands.put("PSYNC", new PsyncCommand(serverConfig, replicationService));
     commands.put("WAIT", new WaitCommand(replicationService));
     commands.put("SUBSCRIBE", subscribeCommand);
+    commands.put("UNSUBSCRIBE", new UnsubscribeCommand(pubSubService, clientId, subscribeCommand));
     commands.put("PUBLISH", new PublishCommand(pubSubService));
   }
 

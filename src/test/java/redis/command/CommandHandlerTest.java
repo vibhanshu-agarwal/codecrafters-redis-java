@@ -1066,4 +1066,59 @@ class CommandHandlerTest {
     byte[] response2 = handler1.handleCommand(publishParts, storage);
     assertEquals(":1\r\n", new String(response2, StandardCharsets.UTF_8));
   }
+
+  /** Validates UNSUBSCRIBE command and transition out of subscribed mode */
+  @Test
+  void testHandleUnsubscribeCommand() {
+    CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
+    Map<String, StoredValue> storage = new HashMap<>();
+
+    // Subscribe
+    handler.handleCommand(
+        List.of(
+            "SUBSCRIBE".getBytes(StandardCharsets.UTF_8),
+            "ch1".getBytes(StandardCharsets.UTF_8),
+            "ch2".getBytes(StandardCharsets.UTF_8)),
+        storage);
+
+    // Unsubscribe from one
+    byte[] response1 =
+        handler.handleCommand(
+            List.of(
+                "UNSUBSCRIBE".getBytes(StandardCharsets.UTF_8),
+                "ch1".getBytes(StandardCharsets.UTF_8)),
+            storage);
+    assertEquals(
+        "*3\r\n$11\r\nunsubscribe\r\n$3\r\nch1\r\n:1\r\n",
+        new String(response1, StandardCharsets.UTF_8));
+
+    // Verify still in subscribed mode (SET should fail)
+    byte[] setResponse =
+        handler.handleCommand(
+            List.of(
+                "SET".getBytes(StandardCharsets.UTF_8),
+                "foo".getBytes(StandardCharsets.UTF_8),
+                "bar".getBytes(StandardCharsets.UTF_8)),
+            storage);
+    assertTrue(
+        new String(setResponse, StandardCharsets.UTF_8)
+            .contains("only (P|S)SUBSCRIBE / (P|S)UNSUBSCRIBE / PING / QUIT / RESET are allowed"));
+
+    // Unsubscribe from all (remaining ch2)
+    byte[] response2 =
+        handler.handleCommand(List.of("UNSUBSCRIBE".getBytes(StandardCharsets.UTF_8)), storage);
+    assertEquals(
+        "*3\r\n$11\r\nunsubscribe\r\n$3\r\nch2\r\n:0\r\n",
+        new String(response2, StandardCharsets.UTF_8));
+
+    // Verify out of subscribed mode (SET should work)
+    byte[] setResponse2 =
+        handler.handleCommand(
+            List.of(
+                "SET".getBytes(StandardCharsets.UTF_8),
+                "foo".getBytes(StandardCharsets.UTF_8),
+                "bar".getBytes(StandardCharsets.UTF_8)),
+            storage);
+    assertEquals("+OK\r\n", new String(setResponse2, StandardCharsets.UTF_8));
+  }
 }

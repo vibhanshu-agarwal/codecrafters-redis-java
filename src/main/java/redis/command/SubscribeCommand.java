@@ -74,4 +74,31 @@ public class SubscribeCommand implements Command {
   public boolean hasSubscriptions() {
     return !subscribedChannels.isEmpty();
   }
+
+  /**
+   * Unsubscribes from a channel.
+   *
+   * @param channel The channel name to unsubscribe from.
+   */
+  public void unsubscribe(String channel) {
+    subscribedChannels.remove(channel);
+  }
+
+  /**
+   * Returns a copy of the currently subscribed channels.
+   *
+   * @return A set of channel names.
+   */
+  public Set<String> getSubscribedChannels() {
+    return new HashSet<>(subscribedChannels);
+  }
+
+  /**
+   * Returns the count of currently subscribed channels.
+   *
+   * @return The number of subscriptions.
+   */
+  public int getSubscriptionCount() {
+    return subscribedChannels.size();
+  }
 }
