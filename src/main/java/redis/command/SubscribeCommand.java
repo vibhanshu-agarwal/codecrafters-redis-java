@@ -27,7 +27,7 @@ public class SubscribeCommand implements Command {
   @Override
   public byte[] execute(List<byte[]> args, Map<String, StoredValue> keyValuePairs) {
     if (args.isEmpty()) {
-      return RespResponse.error("ERR wrong number of arguments for 'subscribe' command");
+      return RespResponse.error("wrong number of arguments for 'subscribe' command");
     }
 
     byte[] fullResponse = new byte[0];
@@ -50,5 +50,14 @@ public class SubscribeCommand implements Command {
     }
 
     return fullResponse;
+  }
+
+  /**
+   * Checks if there are any active subscriptions.
+   *
+   * @return true if there is at least one subscribed channel, false otherwise.
+   */
+  public boolean hasSubscriptions() {
+    return !subscribedChannels.isEmpty();
   }
 }

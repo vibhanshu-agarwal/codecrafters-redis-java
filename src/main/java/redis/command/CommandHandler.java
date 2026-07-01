@@ -15,6 +15,7 @@ import java.util.Map;
 public class CommandHandler {
   private final Map<String, Command> commands = new HashMap<>();
   private final TransactionState transactionState = new TransactionState();
+  private final SubscribeCommand subscribeCommand = new SubscribeCommand();
 
   /** Registers supported commands with argument validation logic */
   public CommandHandler(ServerConfig serverConfig, ReplicationService replicationService, OutputStream clientOutput) {
@@ -44,7 +45,7 @@ public class CommandHandler {
     commands.put("REPLCONF", new ReplConfCommand(serverConfig, replicationService, clientOutput));
     commands.put("PSYNC", new PsyncCommand(serverConfig, replicationService));
     commands.put("WAIT", new WaitCommand(replicationService));
-    commands.put("SUBSCRIBE", new SubscribeCommand());
+    commands.put("SUBSCRIBE", subscribeCommand);
   }
 
   /**
@@ -61,6 +62,14 @@ public class CommandHandler {
     }
 
     String cmdName = new String(parts.getFirst(), StandardCharsets.UTF_8).toUpperCase(Locale.ROOT);
+
+    if (isInSubscribedMode() && !isAllowedInSubscribedMode(cmdName)) {
+      return RespResponse.error(
+          "Can't execute '"
+              + cmdName.toLowerCase(Locale.ROOT)
+              + "': only (P|S)SUBSCRIBE / (P|S)UNSUBSCRIBE / PING / QUIT / RESET are allowed in this context");
+    }
+
     Command command = commands.get(cmdName);
 
     if (command == null) {
@@ -83,5 +92,19 @@ public class CommandHandler {
         || cmdName.equals("DISCARD")
         || cmdName.equals("WATCH")
         || cmdName.equals("UNWATCH");
+  }
+
+  private boolean isInSubscribedMode() {
+    return subscribeCommand.hasSubscriptions();
+  }
+
+  private boolean isAllowedInSubscribedMode(String cmdName) {
+    return cmdName.equals("SUBSCRIBE")
+        || cmdName.equals("UNSUBSCRIBE")
+        || cmdName.equals("PSUBSCRIBE")
+        || cmdName.equals("PUNSUBSCRIBE")
+        || cmdName.equals("PING")
+        || cmdName.equals("QUIT")
+        || cmdName.equals("RESET");
   }
 }
