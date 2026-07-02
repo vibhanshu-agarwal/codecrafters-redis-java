@@ -1121,4 +1121,67 @@ class CommandHandlerTest {
             storage);
     assertEquals("+OK\r\n", new String(setResponse2, StandardCharsets.UTF_8));
   }
+
+  /** Validates ZADD command adds members to a sorted set and returns the number of new members */
+  @Test
+  void testHandleZAddCommand() {
+    CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
+    Map<String, StoredValue> storage = new HashMap<>();
+
+    // ZADD
+    List<byte[]> zaddParts = new ArrayList<>();
+    zaddParts.add("ZADD".getBytes(StandardCharsets.UTF_8));
+    zaddParts.add("zset_key".getBytes(StandardCharsets.UTF_8));
+    zaddParts.add("100.0".getBytes(StandardCharsets.UTF_8));
+    zaddParts.add("foo".getBytes(StandardCharsets.UTF_8));
+    byte[] response = handler.handleCommand(zaddParts, storage);
+    assertEquals(":1\r\n", new String(response, StandardCharsets.UTF_8));
+  }
+
+  /** Validates ZRANK command returns the rank of a member in a sorted set */
+  @Test
+  void testHandleZRankCommand() {
+    CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
+    Map<String, StoredValue> storage = new HashMap<>();
+
+    // ZADD
+    handler.handleCommand(
+        List.of(
+            "ZADD".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "100.0".getBytes(StandardCharsets.UTF_8),
+            "foo".getBytes(StandardCharsets.UTF_8)),
+        storage);
+    handler.handleCommand(
+        List.of(
+            "ZADD".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "100.0".getBytes(StandardCharsets.UTF_8),
+            "bar".getBytes(StandardCharsets.UTF_8)),
+        storage);
+    handler.handleCommand(
+        List.of(
+            "ZADD".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "20.0".getBytes(StandardCharsets.UTF_8),
+            "baz".getBytes(StandardCharsets.UTF_8)),
+        storage);
+    handler.handleCommand(
+        List.of(
+            "ZADD".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "30.1".getBytes(StandardCharsets.UTF_8),
+            "caz".getBytes(StandardCharsets.UTF_8)),
+        storage);
+
+    // ZRANK
+    List<byte[]> zrankParts =
+        List.of(
+            "ZRANK".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "caz".getBytes(StandardCharsets.UTF_8));
+
+    byte[] response = handler.handleCommand(zrankParts, storage);
+    assertEquals(":1\r\n", new String(response, StandardCharsets.UTF_8));
+  }
 }

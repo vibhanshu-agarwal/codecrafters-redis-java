@@ -1,0 +1,5 @@
+{
+    "prettier.mode": "Auto",
+    "eslint.mode": "Auto",
+    "editor.formatOnSave": true
+}

@@ -37,6 +37,21 @@ public class RedisSortedSet extends StoredValue {
     return RespResponse.simpleString("zset");
   }
 
+  public int getRank(String member) {
+    if (!memberToScore.containsKey(member)) {
+      return -1;
+    }
+
+    int rank = 0;
+    for (ZSetMember zSetMember : sortedMembers) {
+      if (zSetMember.getMember().equals(member)) {
+        return rank;
+      }
+      rank++;
+    }
+    return -1; // Should be unreachable if memberToScore is consistent
+  }
+
   //    ZSetMember class:
   private static class ZSetMember implements Comparable<ZSetMember> {
     private final String member;

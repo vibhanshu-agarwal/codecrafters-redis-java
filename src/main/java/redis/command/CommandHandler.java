@@ -70,6 +70,7 @@ public class CommandHandler {
     commands.put("UNSUBSCRIBE", new UnsubscribeCommand(pubSubService, clientId, subscribeCommand));
     commands.put("PUBLISH", new PublishCommand(pubSubService));
     commands.put("ZADD", new ZAddCommand());
+    commands.put("ZRANK", new ZRankCommand());
   }
 
   /**
