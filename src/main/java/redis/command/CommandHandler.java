@@ -71,6 +71,7 @@ public class CommandHandler {
     commands.put("PUBLISH", new PublishCommand(pubSubService));
     commands.put("ZADD", new ZAddCommand());
     commands.put("ZRANK", new ZRankCommand());
+    commands.put("ZRANGE", new ZRangeCommand());
   }
 
   /**

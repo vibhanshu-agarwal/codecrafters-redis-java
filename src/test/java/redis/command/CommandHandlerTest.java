@@ -1184,4 +1184,61 @@ class CommandHandlerTest {
     byte[] response = handler.handleCommand(zrankParts, storage);
     assertEquals(":1\r\n", new String(response, StandardCharsets.UTF_8));
   }
+
+  /** Validates ZRANGE command returns the correct range of members from a sorted set */
+  @Test
+  void testHandleZRangeCommand() {
+    CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
+    Map<String, StoredValue> storage = new HashMap<>();
+
+    // ZADD
+    handler.handleCommand(
+        List.of(
+            "ZADD".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "100.0".getBytes(StandardCharsets.UTF_8),
+            "foo".getBytes(StandardCharsets.UTF_8)),
+        storage);
+    handler.handleCommand(
+        List.of(
+            "ZADD".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "100.0".getBytes(StandardCharsets.UTF_8),
+            "bar".getBytes(StandardCharsets.UTF_8)),
+        storage);
+    handler.handleCommand(
+        List.of(
+            "ZADD".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "20.0".getBytes(StandardCharsets.UTF_8),
+            "baz".getBytes(StandardCharsets.UTF_8)),
+        storage);
+    handler.handleCommand(
+        List.of(
+            "ZADD".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "30.1".getBytes(StandardCharsets.UTF_8),
+            "caz".getBytes(StandardCharsets.UTF_8)),
+        storage);
+    handler.handleCommand(
+        List.of(
+            "ZADD".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "40.2".getBytes(StandardCharsets.UTF_8),
+            "paz".getBytes(StandardCharsets.UTF_8)),
+        storage);
+
+    // ZRANGE
+    List<byte[]> zrangeParts =
+        List.of(
+            "ZRANGE".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "0".getBytes(StandardCharsets.UTF_8),
+            "2".getBytes(StandardCharsets.UTF_8));
+
+    byte[] response = handler.handleCommand(zrangeParts, storage);
+    assertEquals(
+        "*3\r\n$3\r\nbaz\r\n$3\r\ncaz\r\n$3\r\npaz\r\n",
+        new String(response, StandardCharsets.UTF_8));
+  }
 }

@@ -1,6 +1,8 @@
 package redis.storage;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.TreeSet;
 import redis.protocol.RespResponse;
@@ -50,6 +52,44 @@ public class RedisSortedSet extends StoredValue {
       rank++;
     }
     return -1; // Should be unreachable if memberToScore is consistent
+  }
+
+  public List<String> getRange(int start, int stop) {
+    List<String> result = new ArrayList<>();
+    int size = sortedMembers.size();
+
+    // Handle negative indices
+    if (start < 0) {
+        start = size + start;
+    }
+    if (stop < 0) {
+        stop = size + stop;
+    }
+
+    if (start < 0) {
+        start = 0;
+    }
+
+    if (start > stop || start >= size) {
+        return result;
+    }
+
+    if (stop >= size) {
+        stop = size - 1;
+    }
+
+    int currentIndex = 0;
+    for (ZSetMember zSetMember : sortedMembers) {
+        if (currentIndex > stop) {
+            break;
+        }
+        if (currentIndex >= start) {
+            result.add(zSetMember.getMember());
+        }
+        currentIndex++;
+    }
+
+    return result;
   }
 
   //    ZSetMember class:
