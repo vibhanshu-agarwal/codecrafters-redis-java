@@ -69,6 +69,7 @@ public class CommandHandler {
     commands.put("SUBSCRIBE", subscribeCommand);
     commands.put("UNSUBSCRIBE", new UnsubscribeCommand(pubSubService, clientId, subscribeCommand));
     commands.put("PUBLISH", new PublishCommand(pubSubService));
+    commands.put("ZADD", new ZAddCommand());
   }
 
   /**
