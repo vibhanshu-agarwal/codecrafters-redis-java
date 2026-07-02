@@ -13,7 +13,7 @@ import redis.protocol.RespResponse;
 
 public class ReplicationService {
   private static final Set<String> WRITE_COMMANDS =
-      Set.of("SET", "DEL", "RPUSH", "LPUSH", "LPOP", "RPOP", "XADD", "INCR");
+      Set.of("SET", "DEL", "RPUSH", "LPUSH", "LPOP", "RPOP", "XADD", "INCR", "ZADD");
   private final List<OutputStream> replicas = new ArrayList<>();
   private final Map<OutputStream, Long> replicaOffsets = new HashMap<>();
   private long masterOffset = 0;
