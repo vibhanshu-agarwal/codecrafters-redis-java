@@ -1655,6 +1655,6 @@ class CommandHandlerTest {
                 "GETUSER".getBytes(StandardCharsets.UTF_8),
                 "default".getBytes(StandardCharsets.UTF_8)),
             storage);
-    assertEquals("*2\r\n$5\r\nflags\r\n*1\r\n$6\r\nnopass\r\n", new String(response, StandardCharsets.UTF_8));
+    assertEquals("*4\r\n$5\r\nflags\r\n*1\r\n$6\r\nnopass\r\n$9\r\npasswords\r\n*0\r\n", new String(response, StandardCharsets.UTF_8));
   }
 }

@@ -26,7 +26,9 @@ public class AclCommand implements Command {
                 RespResponse.bulkString("flags"),
                 RespResponse.marshalledArray(List.of(
                     RespResponse.bulkString("nopass")
-                ))
+                )),
+                RespResponse.bulkString("passwords"),
+                RespResponse.emptyArray()
             ));
         }
         return RespResponse.error("unknown command");
