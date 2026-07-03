@@ -1398,6 +1398,61 @@ class CommandHandlerTest {
     assertTrue(responseStr.contains("longitude"));
   }
 
+  /** Validates GEOPOS command returns coordinates for existing members */
+  @Test
+  void testHandleGeoPosCommand() {
+    CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
+    Map<String, StoredValue> storage = new HashMap<>();
+
+    handler.handleCommand(
+        List.of(
+            "GEOADD".getBytes(StandardCharsets.UTF_8),
+            "location_key".getBytes(StandardCharsets.UTF_8),
+            "-0.0884948".getBytes(StandardCharsets.UTF_8),
+            "51.506479".getBytes(StandardCharsets.UTF_8),
+            "London".getBytes(StandardCharsets.UTF_8)),
+        storage);
+    handler.handleCommand(
+        List.of(
+            "GEOADD".getBytes(StandardCharsets.UTF_8),
+            "location_key".getBytes(StandardCharsets.UTF_8),
+            "11.5030378".getBytes(StandardCharsets.UTF_8),
+            "48.164271".getBytes(StandardCharsets.UTF_8),
+            "Munich".getBytes(StandardCharsets.UTF_8)),
+        storage);
+
+    List<byte[]> geoposParts =
+        List.of(
+            "GEOPOS".getBytes(StandardCharsets.UTF_8),
+            "location_key".getBytes(StandardCharsets.UTF_8),
+            "London".getBytes(StandardCharsets.UTF_8),
+            "Munich".getBytes(StandardCharsets.UTF_8));
+
+    byte[] response = handler.handleCommand(geoposParts, storage);
+    assertEquals(
+        "*2\r\n*2\r\n$1\r\n0\r\n$1\r\n0\r\n*2\r\n$1\r\n0\r\n$1\r\n0\r\n",
+        new String(response, StandardCharsets.UTF_8));
+
+    List<byte[]> missingMemberParts =
+        List.of(
+            "GEOPOS".getBytes(StandardCharsets.UTF_8),
+            "location_key".getBytes(StandardCharsets.UTF_8),
+            "missing_location".getBytes(StandardCharsets.UTF_8));
+
+    byte[] missingMemberResponse = handler.handleCommand(missingMemberParts, storage);
+    assertEquals("*1\r\n*-1\r\n", new String(missingMemberResponse, StandardCharsets.UTF_8));
+
+    List<byte[]> missingKeyParts =
+        List.of(
+            "GEOPOS".getBytes(StandardCharsets.UTF_8),
+            "missing_key".getBytes(StandardCharsets.UTF_8),
+            "London".getBytes(StandardCharsets.UTF_8),
+            "Munich".getBytes(StandardCharsets.UTF_8));
+
+    byte[] missingKeyResponse = handler.handleCommand(missingKeyParts, storage);
+    assertEquals("*2\r\n*-1\r\n*-1\r\n", new String(missingKeyResponse, StandardCharsets.UTF_8));
+  }
+
   /** Validates ZREM command removes members from a sorted set and returns the number of removed members */
   @Test
   void testHandleZRemCommand() {
