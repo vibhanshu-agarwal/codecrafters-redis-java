@@ -1348,6 +1348,28 @@ class CommandHandlerTest {
     assertEquals("$-1\r\n", new String(missingKeyResponse, StandardCharsets.UTF_8));
   }
   
+  /** Validates GEOADD command returns an error for invalid coordinates */
+  @Test
+  void testHandleGeoAddCommandInvalidCoordinates() {
+    CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
+    Map<String, StoredValue> storage = new HashMap<>();
+
+    List<byte[]> geoaddParts =
+        List.of(
+            "GEOADD".getBytes(StandardCharsets.UTF_8),
+            "location_key".getBytes(StandardCharsets.UTF_8),
+            "200".getBytes(StandardCharsets.UTF_8),
+            "100".getBytes(StandardCharsets.UTF_8),
+            "foo".getBytes(StandardCharsets.UTF_8));
+
+    byte[] response = handler.handleCommand(geoaddParts, storage);
+    String responseStr = new String(response, StandardCharsets.UTF_8);
+    assertTrue(responseStr.startsWith("-ERR"));
+    assertTrue(responseStr.endsWith("\r\n"));
+    assertTrue(responseStr.contains("latitude"));
+    assertTrue(responseStr.contains("longitude"));
+  }
+
   /** Validates ZREM command removes members from a sorted set and returns the number of removed members */
   @Test
   void testHandleZRemCommand() {
