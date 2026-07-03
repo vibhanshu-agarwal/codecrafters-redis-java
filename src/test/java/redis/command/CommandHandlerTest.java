@@ -9,6 +9,7 @@ import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
 import redis.TestConstants;
+import redis.acl.AclUserStore;
 import redis.server.PubSubService;
 import redis.server.ReplicationService;
 import redis.server.ServerConfig;
@@ -1656,5 +1657,40 @@ class CommandHandlerTest {
                 "default".getBytes(StandardCharsets.UTF_8)),
             storage);
     assertEquals("*4\r\n$5\r\nflags\r\n*1\r\n$6\r\nnopass\r\n$9\r\npasswords\r\n*0\r\n", new String(response, StandardCharsets.UTF_8));
+  }
+
+  @Test
+  public void testHandleAuthCommand() {
+    AclUserStore.getInstance().resetForTests();
+    CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
+    Map<String, StoredValue> storage = new HashMap<>();
+
+    handler.handleCommand(
+        List.of(
+            "ACL".getBytes(StandardCharsets.UTF_8),
+            "SETUSER".getBytes(StandardCharsets.UTF_8),
+            "default".getBytes(StandardCharsets.UTF_8),
+            ">mypassword".getBytes(StandardCharsets.UTF_8)),
+        storage);
+
+    byte[] wrongPasswordResponse =
+        handler.handleCommand(
+            List.of(
+                "AUTH".getBytes(StandardCharsets.UTF_8),
+                "default".getBytes(StandardCharsets.UTF_8),
+                "wrongpassword".getBytes(StandardCharsets.UTF_8)),
+            storage);
+    assertEquals(
+        "-WRONGPASS invalid username-password pair or user is disabled.\r\n",
+        new String(wrongPasswordResponse, StandardCharsets.UTF_8));
+
+    byte[] correctPasswordResponse =
+        handler.handleCommand(
+            List.of(
+                "AUTH".getBytes(StandardCharsets.UTF_8),
+                "default".getBytes(StandardCharsets.UTF_8),
+                "mypassword".getBytes(StandardCharsets.UTF_8)),
+            storage);
+    assertEquals("+OK\r\n", new String(correctPasswordResponse, StandardCharsets.UTF_8));
   }
 }

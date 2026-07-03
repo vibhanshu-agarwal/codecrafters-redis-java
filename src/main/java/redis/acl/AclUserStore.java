@@ -35,6 +35,10 @@ public class AclUserStore {
     passwords.add(sha256(password));
   }
 
+  public boolean verifyPassword(String password) {
+    return passwords.contains(sha256(password));
+  }
+
   public void resetForTests() {
     flags.clear();
     flags.add("nopass");

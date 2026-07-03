@@ -96,6 +96,7 @@ public class CommandHandler {
     commands.put("GEODIST", new GeoDistCommand());
     commands.put("GEOSEARCH", new GeoSearchCommand());
     commands.put("ACL", new AclCommand());
+    commands.put("AUTH", new AuthCommand());
   }
 
   /**

@@ -40,6 +40,11 @@ public class RespResponse {
         .getBytes(StandardCharsets.UTF_8);
   }
 
+  public static byte[] wrongPass() {
+    return "-WRONGPASS invalid username-password pair or user is disabled.\r\n"
+        .getBytes(StandardCharsets.UTF_8);
+  }
+
   public static byte[] nullBulkString() {
     return "$-1\r\n".getBytes(StandardCharsets.UTF_8);
   }
