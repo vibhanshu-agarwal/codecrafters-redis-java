@@ -1,6 +1,7 @@
 package redis.command;
 
 import redis.acl.AclUserStore;
+import redis.acl.ConnectionAuth;
 import redis.protocol.RespResponse;
 import redis.storage.StoredValue;
 
@@ -9,6 +10,16 @@ import java.util.List;
 import java.util.Map;
 
 public class AuthCommand implements Command {
+  private final ConnectionAuth connectionAuth;
+
+  public AuthCommand() {
+    this(new ConnectionAuth());
+  }
+
+  public AuthCommand(ConnectionAuth connectionAuth) {
+    this.connectionAuth = connectionAuth;
+  }
+
   @Override
   public byte[] execute(List<byte[]> args, Map<String, StoredValue> keyValuePairs) {
     if (args.size() != 2) {
@@ -24,6 +35,7 @@ public class AuthCommand implements Command {
 
     AclUserStore userStore = AclUserStore.getInstance();
     if (userStore.verifyPassword(password)) {
+      connectionAuth.authenticate();
       return RespResponse.simpleString("OK");
     }
     return RespResponse.wrongPass();

@@ -30,6 +30,10 @@ public class AclUserStore {
     return passwords;
   }
 
+  public boolean hasNopass() {
+    return flags.contains("nopass");
+  }
+
   public void setPassword(String password) {
     flags.remove("nopass");
     passwords.add(sha256(password));

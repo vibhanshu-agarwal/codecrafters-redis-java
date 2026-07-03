@@ -1698,4 +1698,38 @@ class CommandHandlerTest {
             storage);
     assertEquals("+OK\r\n", new String(correctPasswordResponse, StandardCharsets.UTF_8));
   }
+
+  @Test
+  void testUnauthenticatedConnectionReturnsNoAuth() {
+    CommandHandler authenticatedHandler = new CommandHandler(serverConfig, replicationService, null);
+    Map<String, StoredValue> storage = new HashMap<>();
+
+    authenticatedHandler.handleCommand(
+        List.of(
+            "ACL".getBytes(StandardCharsets.UTF_8),
+            "SETUSER".getBytes(StandardCharsets.UTF_8),
+            "default".getBytes(StandardCharsets.UTF_8),
+            ">newpassword".getBytes(StandardCharsets.UTF_8)),
+        storage);
+
+    byte[] whoamiResponse =
+        authenticatedHandler.handleCommand(
+            List.of(
+                "ACL".getBytes(StandardCharsets.UTF_8),
+                "WHOAMI".getBytes(StandardCharsets.UTF_8)),
+            storage);
+    assertEquals("$7\r\ndefault\r\n", new String(whoamiResponse, StandardCharsets.UTF_8));
+
+    CommandHandler unauthenticatedHandler =
+        new CommandHandler(serverConfig, replicationService, null);
+    byte[] noAuthResponse =
+        unauthenticatedHandler.handleCommand(
+            List.of(
+                "ACL".getBytes(StandardCharsets.UTF_8),
+                "WHOAMI".getBytes(StandardCharsets.UTF_8)),
+            storage);
+    assertEquals(
+        "-NOAUTH Authentication required.\r\n",
+        new String(noAuthResponse, StandardCharsets.UTF_8));
+  }
 }

@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import redis.acl.ConnectionAuth;
 import redis.protocol.RespResponse;
 import redis.server.ReplicationService;
 import redis.server.ServerConfig;
@@ -15,6 +16,7 @@ public class CommandHandler {
   private final Map<String, Command> commands = new HashMap<>();
   private final TransactionState transactionState = new TransactionState();
   private final SubscribeCommand subscribeCommand;
+  private final ConnectionAuth connectionAuth;
 
   /** Registers supported commands with argument validation logic */
   public CommandHandler(
@@ -34,6 +36,7 @@ public class CommandHandler {
       OutputStream clientOutput,
       redis.server.PubSubService pubSubService,
       String clientId) {
+    this.connectionAuth = new ConnectionAuth();
     this.subscribeCommand =
         new SubscribeCommand(
             pubSubService,
@@ -96,7 +99,7 @@ public class CommandHandler {
     commands.put("GEODIST", new GeoDistCommand());
     commands.put("GEOSEARCH", new GeoSearchCommand());
     commands.put("ACL", new AclCommand());
-    commands.put("AUTH", new AuthCommand());
+    commands.put("AUTH", new AuthCommand(connectionAuth));
   }
 
   /**
@@ -113,6 +116,10 @@ public class CommandHandler {
     }
 
     String cmdName = new String(parts.getFirst(), StandardCharsets.UTF_8).toUpperCase(Locale.ROOT);
+
+    if (!connectionAuth.isAuthenticated() && !cmdName.equals("AUTH")) {
+      return RespResponse.noAuth();
+    }
 
     if (isInSubscribedMode() && !isAllowedInSubscribedMode(cmdName)) {
       return RespResponse.error(

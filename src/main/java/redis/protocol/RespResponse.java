@@ -45,6 +45,10 @@ public class RespResponse {
         .getBytes(StandardCharsets.UTF_8);
   }
 
+  public static byte[] noAuth() {
+    return "-NOAUTH Authentication required.\r\n".getBytes(StandardCharsets.UTF_8);
+  }
+
   public static byte[] nullBulkString() {
     return "$-1\r\n".getBytes(StandardCharsets.UTF_8);
   }
