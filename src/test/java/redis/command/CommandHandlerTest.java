@@ -1348,6 +1348,34 @@ class CommandHandlerTest {
     assertEquals("$-1\r\n", new String(missingKeyResponse, StandardCharsets.UTF_8));
   }
   
+  /** Validates GEOADD command stores locations in a sorted set */
+  @Test
+  void testHandleGeoAddCommand() {
+    CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
+    Map<String, StoredValue> storage = new HashMap<>();
+
+    List<byte[]> geoaddParts =
+        List.of(
+            "GEOADD".getBytes(StandardCharsets.UTF_8),
+            "places".getBytes(StandardCharsets.UTF_8),
+            "2.2944692".getBytes(StandardCharsets.UTF_8),
+            "48.8584625".getBytes(StandardCharsets.UTF_8),
+            "Paris".getBytes(StandardCharsets.UTF_8));
+
+    byte[] geoaddResponse = handler.handleCommand(geoaddParts, storage);
+    assertEquals(":1\r\n", new String(geoaddResponse, StandardCharsets.UTF_8));
+
+    List<byte[]> zrangeParts =
+        List.of(
+            "ZRANGE".getBytes(StandardCharsets.UTF_8),
+            "places".getBytes(StandardCharsets.UTF_8),
+            "0".getBytes(StandardCharsets.UTF_8),
+            "-1".getBytes(StandardCharsets.UTF_8));
+
+    byte[] zrangeResponse = handler.handleCommand(zrangeParts, storage);
+    assertEquals("*1\r\n$5\r\nParis\r\n", new String(zrangeResponse, StandardCharsets.UTF_8));
+  }
+
   /** Validates GEOADD command returns an error for invalid coordinates */
   @Test
   void testHandleGeoAddCommandInvalidCoordinates() {

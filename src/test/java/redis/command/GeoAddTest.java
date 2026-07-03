@@ -1,6 +1,7 @@
 package redis.command;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertInstanceOf;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import java.nio.charset.StandardCharsets;
@@ -8,6 +9,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import org.junit.jupiter.api.Test;
+import redis.storage.RedisSortedSet;
+import redis.storage.RedisString;
 import redis.storage.StoredValue;
 
 class GeoAddTest {
@@ -98,6 +101,63 @@ class GeoAddTest {
     assertTrue(responseStr.endsWith("\r\n"));
     assertTrue(responseStr.contains("latitude"));
     assertTrue(responseStr.contains("longitude"));
+  }
+
+  @Test
+  void testExecuteStoresLocationInSortedSet() {
+    List<byte[]> args =
+        List.of(
+            "places".getBytes(StandardCharsets.UTF_8),
+            "2.2944692".getBytes(StandardCharsets.UTF_8),
+            "48.8584625".getBytes(StandardCharsets.UTF_8),
+            "Paris".getBytes(StandardCharsets.UTF_8));
+
+    byte[] response = command.execute(args, storage);
+    assertEquals(":1\r\n", new String(response, StandardCharsets.UTF_8));
+
+    StoredValue storedValue = storage.get("places");
+    assertInstanceOf(RedisSortedSet.class, storedValue);
+    RedisSortedSet zset = (RedisSortedSet) storedValue;
+    assertEquals(1, zset.size());
+    assertEquals(0.0, zset.getScore("Paris"));
+    assertEquals(List.of("Paris"), zset.getRange(0, -1));
+  }
+
+  @Test
+  void testExecuteAddsMultipleLocations() {
+    List<byte[]> args =
+        List.of(
+            "places".getBytes(StandardCharsets.UTF_8),
+            "2.2944692".getBytes(StandardCharsets.UTF_8),
+            "48.8584625".getBytes(StandardCharsets.UTF_8),
+            "Paris".getBytes(StandardCharsets.UTF_8),
+            "12.4964".getBytes(StandardCharsets.UTF_8),
+            "41.9029".getBytes(StandardCharsets.UTF_8),
+            "Rome".getBytes(StandardCharsets.UTF_8));
+
+    byte[] response = command.execute(args, storage);
+    assertEquals(":2\r\n", new String(response, StandardCharsets.UTF_8));
+
+    RedisSortedSet zset = (RedisSortedSet) storage.get("places");
+    assertEquals(2, zset.size());
+    assertEquals(List.of("Paris", "Rome"), zset.getRange(0, -1));
+  }
+
+  @Test
+  void testExecuteWrongType() {
+    storage.put("places", new RedisString("value".getBytes(StandardCharsets.UTF_8)));
+
+    List<byte[]> args =
+        List.of(
+            "places".getBytes(StandardCharsets.UTF_8),
+            "2.2944692".getBytes(StandardCharsets.UTF_8),
+            "48.8584625".getBytes(StandardCharsets.UTF_8),
+            "Paris".getBytes(StandardCharsets.UTF_8));
+
+    byte[] response = command.execute(args, storage);
+    assertEquals(
+        "-WRONGTYPE Operation against a key holding the wrong kind of value\r\n",
+        new String(response, StandardCharsets.UTF_8));
   }
 
   @Test
