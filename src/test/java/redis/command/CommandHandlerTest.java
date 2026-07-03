@@ -865,9 +865,7 @@ class CommandHandlerTest {
   void testHandleInfoCommandAsReplica() {
     CommandHandler handler =
         new CommandHandler(
-            TestConstants.createServerConfig(6380, "localhost 6379"),
-            replicationService,
-            null);
+            TestConstants.createServerConfig(6380, "localhost 6379"), replicationService, null);
     Map<String, StoredValue> storage = new HashMap<>();
     List<byte[]> parts = new ArrayList<>();
     parts.add("INFO".getBytes(StandardCharsets.UTF_8));
@@ -1275,7 +1273,8 @@ class CommandHandlerTest {
     // ZCARD missing key
     List<byte[]> missingZcardParts =
         List.of(
-            "ZCARD".getBytes(StandardCharsets.UTF_8), "missing_key".getBytes(StandardCharsets.UTF_8));
+            "ZCARD".getBytes(StandardCharsets.UTF_8),
+            "missing_key".getBytes(StandardCharsets.UTF_8));
 
     byte[] missingResponse = handler.handleCommand(missingZcardParts, storage);
     assertEquals(":0\r\n", new String(missingResponse, StandardCharsets.UTF_8));
@@ -1347,7 +1346,7 @@ class CommandHandlerTest {
     byte[] missingKeyResponse = handler.handleCommand(missingKeyParts, storage);
     assertEquals("$-1\r\n", new String(missingKeyResponse, StandardCharsets.UTF_8));
   }
-  
+
   /** Validates GEOADD command stores locations in a sorted set */
   @Test
   void testHandleGeoAddCommand() {
@@ -1503,7 +1502,10 @@ class CommandHandlerTest {
     assertEquals("$8\r\n682.4778\r\n", new String(responseKm, StandardCharsets.UTF_8));
   }
 
-  /** Validates ZREM command removes members from a sorted set and returns the number of removed members */
+  /**
+   * Validates ZREM command removes members from a sorted set and returns the number of removed
+   * members
+   */
   @Test
   void testHandleZRemCommand() {
     CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
@@ -1549,7 +1551,8 @@ class CommandHandlerTest {
             "0".getBytes(StandardCharsets.UTF_8),
             "-1".getBytes(StandardCharsets.UTF_8));
     byte[] zrangeResponse = handler.handleCommand(zrangeParts, storage);
-    assertEquals("*2\r\n$3\r\nbar\r\n$3\r\nfoo\r\n", new String(zrangeResponse, StandardCharsets.UTF_8));
+    assertEquals(
+        "*2\r\n$3\r\nbar\r\n$3\r\nfoo\r\n", new String(zrangeResponse, StandardCharsets.UTF_8));
 
     // ZREM missing member
     List<byte[]> missingZremParts =
@@ -1625,5 +1628,18 @@ class CommandHandlerTest {
     assertTrue(responseBothStr.contains("Paris"));
     assertTrue(responseBothStr.contains("London"));
     assertTrue(responseBothStr.startsWith("*2\r\n"));
+  }
+
+  @Test
+  public void testAclWhoAmI() {
+    CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
+    Map<String, StoredValue> storage = new HashMap<>();
+
+    byte[] response =
+        handler.handleCommand(
+            List.of(
+                "ACL".getBytes(StandardCharsets.UTF_8), "WHOAMI".getBytes(StandardCharsets.UTF_8)),
+            storage);
+    assertEquals("$7\r\ndefault\r\n", new String(response, StandardCharsets.UTF_8));
   }
 }
