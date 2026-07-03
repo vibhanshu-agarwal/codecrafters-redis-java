@@ -1455,6 +1455,54 @@ class CommandHandlerTest {
     assertEquals("*2\r\n*-1\r\n*-1\r\n", new String(missingKeyResponse, StandardCharsets.UTF_8));
   }
 
+  /** Validates GEODIST command returns distance between two members */
+  @Test
+  void testHandleGeoDistCommand() {
+    CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
+    Map<String, StoredValue> storage = new HashMap<>();
+
+    // Add locations
+    handler.handleCommand(
+        List.of(
+            "GEOADD".getBytes(StandardCharsets.UTF_8),
+            "places".getBytes(StandardCharsets.UTF_8),
+            "11.5030378".getBytes(StandardCharsets.UTF_8),
+            "48.164271".getBytes(StandardCharsets.UTF_8),
+            "Munich".getBytes(StandardCharsets.UTF_8)),
+        storage);
+    handler.handleCommand(
+        List.of(
+            "GEOADD".getBytes(StandardCharsets.UTF_8),
+            "places".getBytes(StandardCharsets.UTF_8),
+            "2.2944692".getBytes(StandardCharsets.UTF_8),
+            "48.8584625".getBytes(StandardCharsets.UTF_8),
+            "Paris".getBytes(StandardCharsets.UTF_8)),
+        storage);
+
+    // Calculate distance
+    List<byte[]> geodistParts =
+        List.of(
+            "GEODIST".getBytes(StandardCharsets.UTF_8),
+            "places".getBytes(StandardCharsets.UTF_8),
+            "Munich".getBytes(StandardCharsets.UTF_8),
+            "Paris".getBytes(StandardCharsets.UTF_8));
+
+    byte[] response = handler.handleCommand(geodistParts, storage);
+    assertEquals("$11\r\n682477.7582\r\n", new String(response, StandardCharsets.UTF_8));
+
+    // Calculate distance in km
+    List<byte[]> geodistKmParts =
+        List.of(
+            "GEODIST".getBytes(StandardCharsets.UTF_8),
+            "places".getBytes(StandardCharsets.UTF_8),
+            "Munich".getBytes(StandardCharsets.UTF_8),
+            "Paris".getBytes(StandardCharsets.UTF_8),
+            "km".getBytes(StandardCharsets.UTF_8));
+
+    byte[] responseKm = handler.handleCommand(geodistKmParts, storage);
+    assertEquals("$8\r\n682.4778\r\n", new String(responseKm, StandardCharsets.UTF_8));
+  }
+
   /** Validates ZREM command removes members from a sorted set and returns the number of removed members */
   @Test
   void testHandleZRemCommand() {
