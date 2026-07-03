@@ -3,6 +3,7 @@ package redis.command;
 import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Map;
+import redis.geo.GeoHashEncoder;
 import redis.protocol.RespResponse;
 import redis.storage.RedisSortedSet;
 import redis.storage.StoredValue;
@@ -12,7 +13,6 @@ public class GeoAddCommand implements Command {
   private static final double MAX_LONGITUDE = 180.0;
   private static final double MIN_LATITUDE = -85.05112878;
   private static final double MAX_LATITUDE = 85.05112878;
-  private static final double HARDCODED_SCORE = 0.0;
 
   @Override
   public byte[] execute(List<byte[]> args, Map<String, StoredValue> keyValuePairs) {
@@ -20,7 +20,7 @@ public class GeoAddCommand implements Command {
       return RespResponse.error("wrong number of arguments for 'geoadd' command");
     }
 
-    String key = new String(args.get(0), StandardCharsets.UTF_8);
+    String key = new String(args.getFirst(), StandardCharsets.UTF_8);
 
     for (int i = 1; i < args.size(); i += 3) {
       double longitude = Double.parseDouble(new String(args.get(i), StandardCharsets.UTF_8));
@@ -55,8 +55,11 @@ public class GeoAddCommand implements Command {
 
       int added = 0;
       for (int i = 1; i < args.size(); i += 3) {
+        double longitude = Double.parseDouble(new String(args.get(i), StandardCharsets.UTF_8));
+        double latitude = Double.parseDouble(new String(args.get(i + 1), StandardCharsets.UTF_8));
         String member = new String(args.get(i + 2), StandardCharsets.UTF_8);
-        added += zset.add(member, HARDCODED_SCORE);
+        double score = GeoHashEncoder.encode(latitude, longitude);
+        added += zset.add(member, score);
       }
 
       BlockingCommandCoordinator.signalKeyChanged(key);

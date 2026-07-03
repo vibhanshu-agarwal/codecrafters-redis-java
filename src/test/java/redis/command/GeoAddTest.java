@@ -119,7 +119,7 @@ class GeoAddTest {
     assertInstanceOf(RedisSortedSet.class, storedValue);
     RedisSortedSet zset = (RedisSortedSet) storedValue;
     assertEquals(1, zset.size());
-    assertEquals(0.0, zset.getScore("Paris"));
+    assertEquals(3663832614298053.0, zset.getScore("Paris"));
     assertEquals(List.of("Paris"), zset.getRange(0, -1));
   }
 
@@ -140,7 +140,7 @@ class GeoAddTest {
 
     RedisSortedSet zset = (RedisSortedSet) storage.get("places");
     assertEquals(2, zset.size());
-    assertEquals(List.of("Paris", "Rome"), zset.getRange(0, -1));
+    assertEquals(List.of("Rome", "Paris"), zset.getRange(0, -1));
   }
 
   @Test
