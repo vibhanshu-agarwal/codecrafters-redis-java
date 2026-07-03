@@ -75,6 +75,7 @@ public class CommandHandler {
     commands.put("ZCARD", new ZCardCommand());
     commands.put("ZSCORE", new ZScoreCommand());
     commands.put("ZREM", new ZRemCommand());
+    commands.put("GEOADD", new GeoAddCommand());
   }
 
   /**
