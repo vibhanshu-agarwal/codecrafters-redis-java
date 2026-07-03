@@ -1631,7 +1631,7 @@ class CommandHandlerTest {
   }
 
   @Test
-  public void testAclWhoAmI() {
+  public void testHandleAclWhoAmICommand() {
     CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
     Map<String, StoredValue> storage = new HashMap<>();
 
@@ -1641,5 +1641,20 @@ class CommandHandlerTest {
                 "ACL".getBytes(StandardCharsets.UTF_8), "WHOAMI".getBytes(StandardCharsets.UTF_8)),
             storage);
     assertEquals("$7\r\ndefault\r\n", new String(response, StandardCharsets.UTF_8));
+  }
+
+  @Test
+  public void testHandleAclGetUserCommand() {
+    CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
+    Map<String, StoredValue> storage = new HashMap<>();
+
+    byte[] response =
+        handler.handleCommand(
+            List.of(
+                "ACL".getBytes(StandardCharsets.UTF_8),
+                "GETUSER".getBytes(StandardCharsets.UTF_8),
+                "default".getBytes(StandardCharsets.UTF_8)),
+            storage);
+    assertEquals("*2\r\n$5\r\nflags\r\n*0\r\n", new String(response, StandardCharsets.UTF_8));
   }
 }

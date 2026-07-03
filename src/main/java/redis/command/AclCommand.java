@@ -18,6 +18,15 @@ public class AclCommand implements Command {
                 return RespResponse.error("wrong number of arguments for 'acl whoami' command");
             }
             return RespResponse.bulkString("default");
+        } else if ("GETUSER".equals(subcommand)) {
+            if (args.size() != 2) {
+                return RespResponse.error("wrong number of arguments for 'acl getuser' command");
+            }
+            // For this stage, we return ["flags", []] as per instructions.
+            return RespResponse.marshalledArray(List.of(
+                RespResponse.bulkString("flags"),
+                RespResponse.emptyArray()
+            ));
         }
         return RespResponse.error("unknown command");
     }

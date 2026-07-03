@@ -59,4 +59,34 @@ class AclCommandTest {
 
     assertEquals("-ERR unknown command\r\n", responseStr);
   }
+
+  /** Validates that the method returns ["flags", []] when the GETUSER subcommand is supplied. */
+  @Test
+  void testExecuteGetUser() {
+    AclCommand command = new AclCommand();
+    Map<String, StoredValue> storage = new HashMap<>();
+    List<byte[]> args = new ArrayList<>();
+    args.add("GETUSER".getBytes(StandardCharsets.UTF_8));
+    args.add("default".getBytes(StandardCharsets.UTF_8));
+
+    byte[] response = command.execute(args, storage);
+    String responseStr = new String(response, StandardCharsets.UTF_8);
+
+    // Expecting *2\r\n$5\r\nflags\r\n*0\r\n
+    assertEquals("*2\r\n$5\r\nflags\r\n*0\r\n", responseStr);
+  }
+
+  /** Validates the error response for incorrect argument count for GETUSER. */
+  @Test
+  void testExecuteGetUserWrongArgs() {
+    AclCommand command = new AclCommand();
+    Map<String, StoredValue> storage = new HashMap<>();
+    List<byte[]> args = new ArrayList<>();
+    args.add("GETUSER".getBytes(StandardCharsets.UTF_8));
+
+    byte[] response = command.execute(args, storage);
+    String responseStr = new String(response, StandardCharsets.UTF_8);
+
+    assertEquals("-ERR wrong number of arguments for 'acl getuser' command\r\n", responseStr);
+  }
 }
