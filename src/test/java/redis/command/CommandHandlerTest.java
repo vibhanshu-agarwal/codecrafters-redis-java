@@ -7,6 +7,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import redis.TestConstants;
 import redis.acl.AclUserStore;
@@ -19,6 +20,11 @@ class CommandHandlerTest {
 
   private final ServerConfig serverConfig = TestConstants.createDefaultServerConfig();
   private final ReplicationService replicationService = new ReplicationService();
+
+  @BeforeEach
+  void resetAclState() {
+    AclUserStore.getInstance().resetForTests();
+  }
 
   /** Validates PING command returns PONG response */
   @Test
@@ -1661,7 +1667,6 @@ class CommandHandlerTest {
 
   @Test
   public void testHandleAuthCommand() {
-    AclUserStore.getInstance().resetForTests();
     CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
     Map<String, StoredValue> storage = new HashMap<>();
 
