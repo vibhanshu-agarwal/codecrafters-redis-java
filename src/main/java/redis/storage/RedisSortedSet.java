@@ -23,6 +23,10 @@ public class RedisSortedSet extends StoredValue {
     return memberToScore.size();
   }
 
+  public Double getScore(String member) {
+    return memberToScore.get(member);
+  }
+
   public int add(String member, double score) {
     Double existing = memberToScore.get(member);
     if (existing != null) {

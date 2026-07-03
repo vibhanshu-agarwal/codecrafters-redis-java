@@ -1280,4 +1280,71 @@ class CommandHandlerTest {
     byte[] missingResponse = handler.handleCommand(missingZcardParts, storage);
     assertEquals(":0\r\n", new String(missingResponse, StandardCharsets.UTF_8));
   }
+
+  /** Validates ZSCORE command returns the score of a member in a sorted set */
+  @Test
+  void testHandleZScoreCommand() {
+    CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
+    Map<String, StoredValue> storage = new HashMap<>();
+
+    // ZADD
+    handler.handleCommand(
+        List.of(
+            "ZADD".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "24.34".getBytes(StandardCharsets.UTF_8),
+            "one".getBytes(StandardCharsets.UTF_8)),
+        storage);
+    handler.handleCommand(
+        List.of(
+            "ZADD".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "90.34".getBytes(StandardCharsets.UTF_8),
+            "two".getBytes(StandardCharsets.UTF_8)),
+        storage);
+
+    // ZSCORE decimal score
+    List<byte[]> zscoreParts =
+        List.of(
+            "ZSCORE".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "one".getBytes(StandardCharsets.UTF_8));
+
+    byte[] response = handler.handleCommand(zscoreParts, storage);
+    assertEquals("$5\r\n24.34\r\n", new String(response, StandardCharsets.UTF_8));
+
+    // ZSCORE integer score
+    handler.handleCommand(
+        List.of(
+            "ZADD".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "20.0".getBytes(StandardCharsets.UTF_8),
+            "member1".getBytes(StandardCharsets.UTF_8)),
+        storage);
+    List<byte[]> intScoreParts =
+        List.of(
+            "ZSCORE".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "member1".getBytes(StandardCharsets.UTF_8));
+    byte[] intScoreResponse = handler.handleCommand(intScoreParts, storage);
+    assertEquals("$2\r\n20\r\n", new String(intScoreResponse, StandardCharsets.UTF_8));
+
+    // ZSCORE missing member
+    List<byte[]> missingMemberParts =
+        List.of(
+            "ZSCORE".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "three".getBytes(StandardCharsets.UTF_8));
+    byte[] missingMemberResponse = handler.handleCommand(missingMemberParts, storage);
+    assertEquals("$-1\r\n", new String(missingMemberResponse, StandardCharsets.UTF_8));
+
+    // ZSCORE missing key
+    List<byte[]> missingKeyParts =
+        List.of(
+            "ZSCORE".getBytes(StandardCharsets.UTF_8),
+            "missing_key".getBytes(StandardCharsets.UTF_8),
+            "member".getBytes(StandardCharsets.UTF_8));
+    byte[] missingKeyResponse = handler.handleCommand(missingKeyParts, storage);
+    assertEquals("$-1\r\n", new String(missingKeyResponse, StandardCharsets.UTF_8));
+  }
 }

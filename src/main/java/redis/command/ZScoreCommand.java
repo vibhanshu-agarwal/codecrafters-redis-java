@@ -8,16 +8,17 @@ import redis.protocol.RespResponse;
 import redis.storage.RedisSortedSet;
 import redis.storage.StoredValue;
 
-public class ZCardCommand implements Command {
+public class ZScoreCommand implements Command {
   @Override
   public byte[] execute(List<byte[]> args, Map<String, StoredValue> keyValuePairs) {
-    if (args.size() != 1) {
-      return RespResponse.error("wrong number of arguments for 'zcard' command");
+    if (args.size() != 2) {
+      return RespResponse.error("wrong number of arguments for 'zscore' command");
     }
-    String key = new String(args.getFirst(), StandardCharsets.UTF_8);
+
+    String key = new String(args.get(0), StandardCharsets.UTF_8);
+    String member = new String(args.get(1), StandardCharsets.UTF_8);
 
     BlockingCommandCoordinator.lock().lock();
-    // Synchronizes access; validates expiration; returns sorted set cardinality
     try {
       StoredValue value = keyValuePairs.get(key);
 
@@ -25,15 +26,31 @@ public class ZCardCommand implements Command {
         keyValuePairs.remove(key);
         value = null;
       }
+
       if (Objects.isNull(value)) {
-        return RespResponse.integer(0);
+        return RespResponse.nullBulkString();
       }
+
       if (!(value instanceof RedisSortedSet)) {
         return RespResponse.wrongType();
       }
-      return RespResponse.integer(((RedisSortedSet) value).size());
+
+      Double score = ((RedisSortedSet) value).getScore(member);
+      if (Objects.isNull(score)) {
+        return RespResponse.nullBulkString();
+      }
+
+      return RespResponse.bulkString(formatScore(score));
     } finally {
       BlockingCommandCoordinator.lock().unlock();
     }
+  }
+
+  private String formatScore(double score) {
+    String s = Double.toString(score);
+    if (s.endsWith(".0")) {
+      return s.substring(0, s.length() - 2);
+    }
+    return s;
   }
 }
