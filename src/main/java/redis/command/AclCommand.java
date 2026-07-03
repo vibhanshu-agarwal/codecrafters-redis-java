@@ -22,10 +22,11 @@ public class AclCommand implements Command {
             if (args.size() != 2) {
                 return RespResponse.error("wrong number of arguments for 'acl getuser' command");
             }
-            // For this stage, we return ["flags", []] as per instructions.
             return RespResponse.marshalledArray(List.of(
                 RespResponse.bulkString("flags"),
-                RespResponse.emptyArray()
+                RespResponse.marshalledArray(List.of(
+                    RespResponse.bulkString("nopass")
+                ))
             ));
         }
         return RespResponse.error("unknown command");

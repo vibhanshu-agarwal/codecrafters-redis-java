@@ -60,7 +60,7 @@ class AclCommandTest {
     assertEquals("-ERR unknown command\r\n", responseStr);
   }
 
-  /** Validates that the method returns ["flags", []] when the GETUSER subcommand is supplied. */
+  /** Validates that the method returns ["flags", ["nopass"]] when the GETUSER subcommand is supplied. */
   @Test
   void testExecuteGetUser() {
     AclCommand command = new AclCommand();
@@ -72,8 +72,7 @@ class AclCommandTest {
     byte[] response = command.execute(args, storage);
     String responseStr = new String(response, StandardCharsets.UTF_8);
 
-    // Expecting *2\r\n$5\r\nflags\r\n*0\r\n
-    assertEquals("*2\r\n$5\r\nflags\r\n*0\r\n", responseStr);
+    assertEquals("*2\r\n$5\r\nflags\r\n*1\r\n$6\r\nnopass\r\n", responseStr);
   }
 
   /** Validates the error response for incorrect argument count for GETUSER. */
