@@ -1,6 +1,7 @@
 package redis.geo;
 
 public final class GeoUtils {
+  public static final String UNSUPPORTED_UNIT_ERROR = "unsupported unit provided. Use m, km, ft, mi";
   public static final double EARTH_RADIUS_METERS = 6372797.560856;
 
   private GeoUtils() {}
@@ -26,5 +27,24 @@ public final class GeoUtils {
     double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 
     return EARTH_RADIUS_METERS * c;
+  }
+
+  /**
+   * Returns the conversion factor from meters to the specified unit.
+   *
+   * @param unit The unit name (m, km, mi, ft)
+   * @return Conversion factor, or null if unit is unsupported
+   */
+  public static Double getUnitConversion(String unit) {
+    if (unit == null) {
+      return 1.0;
+    }
+    return switch (unit.toLowerCase()) {
+      case "m" -> 1.0;
+      case "km" -> 0.001;
+      case "mi" -> 0.000621371;
+      case "ft" -> 3.28084;
+      default -> null;
+    };
   }
 }

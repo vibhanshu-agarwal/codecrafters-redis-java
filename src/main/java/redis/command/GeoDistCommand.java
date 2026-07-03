@@ -26,22 +26,9 @@ public class GeoDistCommand implements Command {
       unit = new String(args.get(3), StandardCharsets.UTF_8).toLowerCase();
     }
 
-    double unitConversion;
-    switch (unit) {
-      case "m":
-        unitConversion = 1.0;
-        break;
-      case "km":
-        unitConversion = 0.001;
-        break;
-      case "mi":
-        unitConversion = 0.000621371;
-        break;
-      case "ft":
-        unitConversion = 3.28084;
-        break;
-      default:
-        return RespResponse.error("unsupported unit provided. Use m, km, ft, mi");
+    Double unitConversion = GeoUtils.getUnitConversion(unit);
+    if (unitConversion == null) {
+      return RespResponse.error(GeoUtils.UNSUPPORTED_UNIT_ERROR);
     }
 
     StoredValue value = keyValuePairs.get(key);

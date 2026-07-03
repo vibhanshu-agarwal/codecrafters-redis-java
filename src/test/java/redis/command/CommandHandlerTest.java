@@ -1560,4 +1560,70 @@ class CommandHandlerTest {
     byte[] missingResponse = handler.handleCommand(missingZremParts, storage);
     assertEquals(":0\r\n", new String(missingResponse, StandardCharsets.UTF_8));
   }
+
+  /** Validates GEOSEARCH command returns locations within a radius */
+  @Test
+  void testHandleGeoSearchCommand() {
+    CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
+    Map<String, StoredValue> storage = new HashMap<>();
+
+    // Add locations
+    handler.handleCommand(
+        List.of(
+            "GEOADD".getBytes(StandardCharsets.UTF_8),
+            "places".getBytes(StandardCharsets.UTF_8),
+            "11.5030378".getBytes(StandardCharsets.UTF_8),
+            "48.164271".getBytes(StandardCharsets.UTF_8),
+            "Munich".getBytes(StandardCharsets.UTF_8)),
+        storage);
+    handler.handleCommand(
+        List.of(
+            "GEOADD".getBytes(StandardCharsets.UTF_8),
+            "places".getBytes(StandardCharsets.UTF_8),
+            "2.2944692".getBytes(StandardCharsets.UTF_8),
+            "48.8584625".getBytes(StandardCharsets.UTF_8),
+            "Paris".getBytes(StandardCharsets.UTF_8)),
+        storage);
+    handler.handleCommand(
+        List.of(
+            "GEOADD".getBytes(StandardCharsets.UTF_8),
+            "places".getBytes(StandardCharsets.UTF_8),
+            "-0.0884948".getBytes(StandardCharsets.UTF_8),
+            "51.506479".getBytes(StandardCharsets.UTF_8),
+            "London".getBytes(StandardCharsets.UTF_8)),
+        storage);
+
+    // Search Paris
+    List<byte[]> searchParisParts =
+        List.of(
+            "GEOSEARCH".getBytes(StandardCharsets.UTF_8),
+            "places".getBytes(StandardCharsets.UTF_8),
+            "FROMLONLAT".getBytes(StandardCharsets.UTF_8),
+            "2".getBytes(StandardCharsets.UTF_8),
+            "48".getBytes(StandardCharsets.UTF_8),
+            "BYRADIUS".getBytes(StandardCharsets.UTF_8),
+            "100000".getBytes(StandardCharsets.UTF_8),
+            "m".getBytes(StandardCharsets.UTF_8));
+
+    byte[] responseParis = handler.handleCommand(searchParisParts, storage);
+    assertEquals("*1\r\n$5\r\nParis\r\n", new String(responseParis, StandardCharsets.UTF_8));
+
+    // Search Paris and London
+    List<byte[]> searchBothParts =
+        List.of(
+            "GEOSEARCH".getBytes(StandardCharsets.UTF_8),
+            "places".getBytes(StandardCharsets.UTF_8),
+            "FROMLONLAT".getBytes(StandardCharsets.UTF_8),
+            "2".getBytes(StandardCharsets.UTF_8),
+            "48".getBytes(StandardCharsets.UTF_8),
+            "BYRADIUS".getBytes(StandardCharsets.UTF_8),
+            "500000".getBytes(StandardCharsets.UTF_8),
+            "m".getBytes(StandardCharsets.UTF_8));
+
+    byte[] responseBoth = handler.handleCommand(searchBothParts, storage);
+    String responseBothStr = new String(responseBoth, StandardCharsets.UTF_8);
+    assertTrue(responseBothStr.contains("Paris"));
+    assertTrue(responseBothStr.contains("London"));
+    assertTrue(responseBothStr.startsWith("*2\r\n"));
+  }
 }
