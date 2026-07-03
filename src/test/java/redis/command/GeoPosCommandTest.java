@@ -20,19 +20,21 @@ class GeoPosCommandTest {
   @Test
   void testExecuteExistingMembers() {
     RedisSortedSet zset = new RedisSortedSet();
-    zset.add("London", 1.0);
-    zset.add("Munich", 2.0);
+    zset.add("Foo", 3663832614298053.0);
+    zset.add("Bar", 3876464048901851.0);
     storage.put("location_key", zset);
 
     List<byte[]> args =
         List.of(
             "location_key".getBytes(StandardCharsets.UTF_8),
-            "London".getBytes(StandardCharsets.UTF_8),
-            "Munich".getBytes(StandardCharsets.UTF_8));
+            "Foo".getBytes(StandardCharsets.UTF_8),
+            "Bar".getBytes(StandardCharsets.UTF_8));
 
     byte[] response = command.execute(args, storage);
     assertEquals(
-        "*2\r\n*2\r\n$1\r\n0\r\n$1\r\n0\r\n*2\r\n$1\r\n0\r\n$1\r\n0\r\n",
+        "*2\r\n"
+            + "*2\r\n$17\r\n2.294471561908722\r\n$17\r\n48.85846255040141\r\n"
+            + "*2\r\n$17\r\n49.12499874830246\r\n$17\r\n72.99100027813947\r\n",
         new String(response, StandardCharsets.UTF_8));
   }
 

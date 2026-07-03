@@ -23,6 +23,39 @@ public final class GeoHashEncoder {
     return interleave(latInt, lonInt);
   }
 
+  public static double[] decode(double geoCode) {
+    long score = (long) geoCode;
+    long y = score >> 1;
+    long x = score;
+
+    int gridLatitude = compactInt64ToInt32(x);
+    int gridLongitude = compactInt64ToInt32(y);
+
+    double gridLatitudeMin =
+        MIN_LATITUDE + LATITUDE_RANGE * (gridLatitude / Math.pow(2, 26));
+    double gridLatitudeMax =
+        MIN_LATITUDE + LATITUDE_RANGE * ((gridLatitude + 1) / Math.pow(2, 26));
+    double gridLongitudeMin =
+        MIN_LONGITUDE + LONGITUDE_RANGE * (gridLongitude / Math.pow(2, 26));
+    double gridLongitudeMax =
+        MIN_LONGITUDE + LONGITUDE_RANGE * ((gridLongitude + 1) / Math.pow(2, 26));
+
+    double latitude = (gridLatitudeMin + gridLatitudeMax) / 2;
+    double longitude = (gridLongitudeMin + gridLongitudeMax) / 2;
+
+    return new double[] {latitude, longitude};
+  }
+
+  private static int compactInt64ToInt32(long v) {
+    v = v & 0x5555555555555555L;
+    v = (v | (v >> 1)) & 0x3333333333333333L;
+    v = (v | (v >> 2)) & 0x0F0F0F0F0F0F0F0FL;
+    v = (v | (v >> 4)) & 0x00FF00FF00FF00FFL;
+    v = (v | (v >> 8)) & 0x0000FFFF0000FFFFL;
+    v = (v | (v >> 16)) & 0x00000000FFFFFFFFL;
+    return (int) v;
+  }
+
   private static long interleave(int x, int y) {
     long xSpread = spreadInt32ToInt64(x);
     long ySpread = spreadInt32ToInt64(y);

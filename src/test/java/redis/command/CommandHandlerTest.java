@@ -1430,7 +1430,9 @@ class CommandHandlerTest {
 
     byte[] response = handler.handleCommand(geoposParts, storage);
     assertEquals(
-        "*2\r\n*2\r\n$1\r\n0\r\n$1\r\n0\r\n*2\r\n$1\r\n0\r\n$1\r\n0\r\n",
+        "*2\r\n"
+            + "*2\r\n$20\r\n-0.08849412202835083\r\n$17\r\n51.50647814139934\r\n"
+            + "*2\r\n$18\r\n11.503036916255951\r\n$17\r\n48.16427086232977\r\n",
         new String(response, StandardCharsets.UTF_8));
 
     List<byte[]> missingMemberParts =
