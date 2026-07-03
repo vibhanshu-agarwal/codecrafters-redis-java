@@ -1241,4 +1241,43 @@ class CommandHandlerTest {
         "*3\r\n$3\r\nbaz\r\n$3\r\ncaz\r\n$3\r\npaz\r\n",
         new String(response, StandardCharsets.UTF_8));
   }
+
+  /** Validates ZCARD command returns the cardinality of a sorted set */
+  @Test
+  void testHandleZCardCommand() {
+    CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
+    Map<String, StoredValue> storage = new HashMap<>();
+
+    // ZADD
+    handler.handleCommand(
+        List.of(
+            "ZADD".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "1.0".getBytes(StandardCharsets.UTF_8),
+            "member1".getBytes(StandardCharsets.UTF_8)),
+        storage);
+    handler.handleCommand(
+        List.of(
+            "ZADD".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "2.0".getBytes(StandardCharsets.UTF_8),
+            "member2".getBytes(StandardCharsets.UTF_8)),
+        storage);
+
+    // ZCARD
+    List<byte[]> zcardParts =
+        List.of(
+            "ZCARD".getBytes(StandardCharsets.UTF_8), "zset_key".getBytes(StandardCharsets.UTF_8));
+
+    byte[] response = handler.handleCommand(zcardParts, storage);
+    assertEquals(":2\r\n", new String(response, StandardCharsets.UTF_8));
+
+    // ZCARD missing key
+    List<byte[]> missingZcardParts =
+        List.of(
+            "ZCARD".getBytes(StandardCharsets.UTF_8), "missing_key".getBytes(StandardCharsets.UTF_8));
+
+    byte[] missingResponse = handler.handleCommand(missingZcardParts, storage);
+    assertEquals(":0\r\n", new String(missingResponse, StandardCharsets.UTF_8));
+  }
 }

@@ -12,7 +12,15 @@ public class RedisSortedSet extends StoredValue {
   private final TreeSet<ZSetMember> sortedMembers = new TreeSet<>();
 
   public RedisSortedSet() {
-    super(StoredValue.NO_EXPIRY);
+    this(StoredValue.NO_EXPIRY);
+  }
+
+  public RedisSortedSet(long expiryTime) {
+    super(expiryTime);
+  }
+
+  public int size() {
+    return memberToScore.size();
   }
 
   public int add(String member, double score) {
@@ -60,33 +68,33 @@ public class RedisSortedSet extends StoredValue {
 
     // Handle negative indices
     if (start < 0) {
-        start = size + start;
+      start = size + start;
     }
     if (stop < 0) {
-        stop = size + stop;
+      stop = size + stop;
     }
 
     if (start < 0) {
-        start = 0;
+      start = 0;
     }
 
     if (start > stop || start >= size) {
-        return result;
+      return result;
     }
 
     if (stop >= size) {
-        stop = size - 1;
+      stop = size - 1;
     }
 
     int currentIndex = 0;
     for (ZSetMember zSetMember : sortedMembers) {
-        if (currentIndex > stop) {
-            break;
-        }
-        if (currentIndex >= start) {
-            result.add(zSetMember.getMember());
-        }
-        currentIndex++;
+      if (currentIndex > stop) {
+        break;
+      }
+      if (currentIndex >= start) {
+        result.add(zSetMember.getMember());
+      }
+      currentIndex++;
     }
 
     return result;
