@@ -1347,4 +1347,62 @@ class CommandHandlerTest {
     byte[] missingKeyResponse = handler.handleCommand(missingKeyParts, storage);
     assertEquals("$-1\r\n", new String(missingKeyResponse, StandardCharsets.UTF_8));
   }
+  
+  /** Validates ZREM command removes members from a sorted set and returns the number of removed members */
+  @Test
+  void testHandleZRemCommand() {
+    CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
+    Map<String, StoredValue> storage = new HashMap<>();
+
+    // ZADD some members
+    handler.handleCommand(
+        List.of(
+            "ZADD".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "80.5".getBytes(StandardCharsets.UTF_8),
+            "foo".getBytes(StandardCharsets.UTF_8)),
+        storage);
+    handler.handleCommand(
+        List.of(
+            "ZADD".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "50.3".getBytes(StandardCharsets.UTF_8),
+            "baz".getBytes(StandardCharsets.UTF_8)),
+        storage);
+    handler.handleCommand(
+        List.of(
+            "ZADD".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "80.5".getBytes(StandardCharsets.UTF_8),
+            "bar".getBytes(StandardCharsets.UTF_8)),
+        storage);
+
+    // ZREM existing member
+    List<byte[]> zremParts =
+        List.of(
+            "ZREM".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "baz".getBytes(StandardCharsets.UTF_8));
+    byte[] response = handler.handleCommand(zremParts, storage);
+    assertEquals(":1\r\n", new String(response, StandardCharsets.UTF_8));
+
+    // Verify member is gone using ZRANGE
+    List<byte[]> zrangeParts =
+        List.of(
+            "ZRANGE".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "0".getBytes(StandardCharsets.UTF_8),
+            "-1".getBytes(StandardCharsets.UTF_8));
+    byte[] zrangeResponse = handler.handleCommand(zrangeParts, storage);
+    assertEquals("*2\r\n$3\r\nbar\r\n$3\r\nfoo\r\n", new String(zrangeResponse, StandardCharsets.UTF_8));
+
+    // ZREM missing member
+    List<byte[]> missingZremParts =
+        List.of(
+            "ZREM".getBytes(StandardCharsets.UTF_8),
+            "zset_key".getBytes(StandardCharsets.UTF_8),
+            "missing_member".getBytes(StandardCharsets.UTF_8));
+    byte[] missingResponse = handler.handleCommand(missingZremParts, storage);
+    assertEquals(":0\r\n", new String(missingResponse, StandardCharsets.UTF_8));
+  }
 }

@@ -74,6 +74,7 @@ public class CommandHandler {
     commands.put("ZRANGE", new ZRangeCommand());
     commands.put("ZCARD", new ZCardCommand());
     commands.put("ZSCORE", new ZScoreCommand());
+    commands.put("ZREM", new ZRemCommand());
   }
 
   /**

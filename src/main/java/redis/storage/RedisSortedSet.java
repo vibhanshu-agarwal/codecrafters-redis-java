@@ -46,6 +46,15 @@ public class RedisSortedSet extends StoredValue {
     }
   }
 
+  public int remove(String member) {
+    Double score = memberToScore.remove(member);
+    if (score == null) {
+      return 0;
+    }
+    sortedMembers.remove(new ZSetMember(member, score));
+    return 1;
+  }
+
   @Override
   public byte[] getType() {
     return RespResponse.simpleString("zset");
