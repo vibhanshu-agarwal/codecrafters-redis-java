@@ -1,16 +1,15 @@
 package redis.command;
 
-import redis.protocol.RespResponse;
-import redis.server.ReplicationService;
-import redis.server.ServerConfig;
-import redis.storage.StoredValue;
-
 import java.io.OutputStream;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
+import redis.protocol.RespResponse;
+import redis.server.ReplicationService;
+import redis.server.ServerConfig;
+import redis.storage.StoredValue;
 
 public class CommandHandler {
   private final Map<String, Command> commands = new HashMap<>();
@@ -18,28 +17,45 @@ public class CommandHandler {
   private final SubscribeCommand subscribeCommand;
 
   /** Registers supported commands with argument validation logic */
-  public CommandHandler(ServerConfig serverConfig, ReplicationService replicationService, OutputStream clientOutput) {
-    this(serverConfig, replicationService, clientOutput, new redis.server.PubSubService(), "test-client");
+  public CommandHandler(
+      ServerConfig serverConfig, ReplicationService replicationService, OutputStream clientOutput) {
+    this(
+        serverConfig,
+        replicationService,
+        clientOutput,
+        new redis.server.PubSubService(),
+        "test-client");
   }
 
   /** Registers supported commands with argument validation logic */
-  public CommandHandler(ServerConfig serverConfig, ReplicationService replicationService, OutputStream clientOutput, redis.server.PubSubService pubSubService, String clientId) {
-    this.subscribeCommand = new SubscribeCommand(pubSubService, clientId, (channel, message) -> {
-      byte[] marshalled = RespResponse.marshalledArray(List.of(
-          RespResponse.bulkString("message"),
-          RespResponse.bulkString(channel),
-          RespResponse.bulkString(message)
-      ));
-      BlockingCommandCoordinator.lock().lock();
-      try {
-        clientOutput.write(marshalled);
-        clientOutput.flush();
-      } catch (Exception e) {
-        System.out.println("Error sending message to client " + clientId + ": " + e.getMessage());
-      } finally {
-        BlockingCommandCoordinator.lock().unlock();
-      }
-    });
+  public CommandHandler(
+      ServerConfig serverConfig,
+      ReplicationService replicationService,
+      OutputStream clientOutput,
+      redis.server.PubSubService pubSubService,
+      String clientId) {
+    this.subscribeCommand =
+        new SubscribeCommand(
+            pubSubService,
+            clientId,
+            (channel, message) -> {
+              byte[] marshalled =
+                  RespResponse.marshalledArray(
+                      List.of(
+                          RespResponse.bulkString("message"),
+                          RespResponse.bulkString(channel),
+                          RespResponse.bulkString(message)));
+              BlockingCommandCoordinator.lock().lock();
+              try {
+                clientOutput.write(marshalled);
+                clientOutput.flush();
+              } catch (Exception e) {
+                System.out.println(
+                    "Error sending message to client " + clientId + ": " + e.getMessage());
+              } finally {
+                BlockingCommandCoordinator.lock().unlock();
+              }
+            });
     commands.put("PING", new PingCommand(subscribeCommand));
     commands.put("ECHO", new EchoCommand());
     commands.put("SET", new SetCommand());
@@ -79,6 +95,7 @@ public class CommandHandler {
     commands.put("GEOPOS", new GeoPosCommand());
     commands.put("GEODIST", new GeoDistCommand());
     commands.put("GEOSEARCH", new GeoSearchCommand());
+    commands.put("ACLWHOAMI", new AclWhoAmICommand());
   }
 
   /**
