@@ -63,6 +63,7 @@ public class CommandHandler {
     commands.put("ECHO", new EchoCommand());
     commands.put("SET", new SetCommand());
     commands.put("SETBIT", new SetBitCommand());
+    commands.put("GETBIT", new GetBitCommand());
     commands.put("GET", new GetCommand());
     commands.put("KEYS", new KeysCommand());
     commands.put("RPUSH", new RPushCommand());
