@@ -65,6 +65,7 @@ public class CommandHandler {
     commands.put("SETBIT", new SetBitCommand());
     commands.put("GETBIT", new GetBitCommand());
     commands.put("BITCOUNT", new BitCountCommand());
+    commands.put("BITOP", new BitOpCommand());
     commands.put("GET", new GetCommand());
     commands.put("STRLEN", new StrLenCommand());
     commands.put("KEYS", new KeysCommand());

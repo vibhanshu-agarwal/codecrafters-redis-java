@@ -1797,4 +1797,100 @@ class CommandHandlerTest {
             storage);
     assertEquals(":2\r\n", new String(strLen2, StandardCharsets.UTF_8));
   }
+
+  @Test
+  void testBitOpAndViaCommandHandler() {
+    CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
+    Map<String, StoredValue> storage = new HashMap<>();
+
+    // SETBIT key1 0 1
+    assertEquals(
+        ":0\r\n",
+        new String(
+            handler.handleCommand(
+                List.of(
+                    "SETBIT".getBytes(StandardCharsets.UTF_8),
+                    "key1".getBytes(StandardCharsets.UTF_8),
+                    "0".getBytes(StandardCharsets.UTF_8),
+                    "1".getBytes(StandardCharsets.UTF_8)),
+                storage),
+            StandardCharsets.UTF_8));
+
+    // SETBIT key1 4 1
+    assertEquals(
+        ":0\r\n",
+        new String(
+            handler.handleCommand(
+                List.of(
+                    "SETBIT".getBytes(StandardCharsets.UTF_8),
+                    "key1".getBytes(StandardCharsets.UTF_8),
+                    "4".getBytes(StandardCharsets.UTF_8),
+                    "1".getBytes(StandardCharsets.UTF_8)),
+                storage),
+            StandardCharsets.UTF_8));
+
+    // SETBIT key2 0 1
+    assertEquals(
+        ":0\r\n",
+        new String(
+            handler.handleCommand(
+                List.of(
+                    "SETBIT".getBytes(StandardCharsets.UTF_8),
+                    "key2".getBytes(StandardCharsets.UTF_8),
+                    "0".getBytes(StandardCharsets.UTF_8),
+                    "1".getBytes(StandardCharsets.UTF_8)),
+                storage),
+            StandardCharsets.UTF_8));
+
+    // SETBIT key2 6 1
+    assertEquals(
+        ":0\r\n",
+        new String(
+            handler.handleCommand(
+                List.of(
+                    "SETBIT".getBytes(StandardCharsets.UTF_8),
+                    "key2".getBytes(StandardCharsets.UTF_8),
+                    "6".getBytes(StandardCharsets.UTF_8),
+                    "1".getBytes(StandardCharsets.UTF_8)),
+                storage),
+            StandardCharsets.UTF_8));
+
+    // BITOP AND dest key1 key2 -> :1\r\n
+    assertEquals(
+        ":1\r\n",
+        new String(
+            handler.handleCommand(
+                List.of(
+                    "BITOP".getBytes(StandardCharsets.UTF_8),
+                    "AND".getBytes(StandardCharsets.UTF_8),
+                    "dest".getBytes(StandardCharsets.UTF_8),
+                    "key1".getBytes(StandardCharsets.UTF_8),
+                    "key2".getBytes(StandardCharsets.UTF_8)),
+                storage),
+            StandardCharsets.UTF_8));
+
+    // GETBIT dest 0 -> :1\r\n
+    assertEquals(
+        ":1\r\n",
+        new String(
+            handler.handleCommand(
+                List.of(
+                    "GETBIT".getBytes(StandardCharsets.UTF_8),
+                    "dest".getBytes(StandardCharsets.UTF_8),
+                    "0".getBytes(StandardCharsets.UTF_8)),
+                storage),
+            StandardCharsets.UTF_8));
+
+    // GETBIT dest 4 -> :0\r\n
+    assertEquals(
+        ":0\r\n",
+        new String(
+            handler.handleCommand(
+                List.of(
+                    "GETBIT".getBytes(StandardCharsets.UTF_8),
+                    "dest".getBytes(StandardCharsets.UTF_8),
+                    "4".getBytes(StandardCharsets.UTF_8)),
+                storage),
+            StandardCharsets.UTF_8));
+  }
 }
