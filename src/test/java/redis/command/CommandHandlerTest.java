@@ -1732,4 +1732,69 @@ class CommandHandlerTest {
         "-NOAUTH Authentication required.\r\n",
         new String(noAuthResponse, StandardCharsets.UTF_8));
   }
+
+  @Test
+  void testSetBitAndStrLenFlow() {
+    CommandHandler handler = new CommandHandler(serverConfig, replicationService, null);
+    Map<String, StoredValue> storage = new HashMap<>();
+
+    // STRLEN on non-existing key
+    byte[] initialStrLen =
+        handler.handleCommand(
+            List.of(
+                "STRLEN".getBytes(StandardCharsets.UTF_8),
+                "bitmap_key".getBytes(StandardCharsets.UTF_8)),
+            storage);
+    assertEquals(":0\r\n", new String(initialStrLen, StandardCharsets.UTF_8));
+
+    // SETBIT bitmap_key 1 1 -> :0\r\n
+    byte[] setBit1 =
+        handler.handleCommand(
+            List.of(
+                "SETBIT".getBytes(StandardCharsets.UTF_8),
+                "bitmap_key".getBytes(StandardCharsets.UTF_8),
+                "1".getBytes(StandardCharsets.UTF_8),
+                "1".getBytes(StandardCharsets.UTF_8)),
+            storage);
+    assertEquals(":0\r\n", new String(setBit1, StandardCharsets.UTF_8));
+
+    // STRLEN bitmap_key -> :1\r\n
+    byte[] strLen1 =
+        handler.handleCommand(
+            List.of(
+                "STRLEN".getBytes(StandardCharsets.UTF_8),
+                "bitmap_key".getBytes(StandardCharsets.UTF_8)),
+            storage);
+    assertEquals(":1\r\n", new String(strLen1, StandardCharsets.UTF_8));
+
+    // SETBIT bitmap_key 10 1 -> :0\r\n
+    byte[] setBit2 =
+        handler.handleCommand(
+            List.of(
+                "SETBIT".getBytes(StandardCharsets.UTF_8),
+                "bitmap_key".getBytes(StandardCharsets.UTF_8),
+                "10".getBytes(StandardCharsets.UTF_8),
+                "1".getBytes(StandardCharsets.UTF_8)),
+            storage);
+    assertEquals(":0\r\n", new String(setBit2, StandardCharsets.UTF_8));
+
+    // GETBIT bitmap_key 10 -> :1\r\n
+    byte[] getBit10 =
+        handler.handleCommand(
+            List.of(
+                "GETBIT".getBytes(StandardCharsets.UTF_8),
+                "bitmap_key".getBytes(StandardCharsets.UTF_8),
+                "10".getBytes(StandardCharsets.UTF_8)),
+            storage);
+    assertEquals(":1\r\n", new String(getBit10, StandardCharsets.UTF_8));
+
+    // STRLEN bitmap_key -> :2\r\n
+    byte[] strLen2 =
+        handler.handleCommand(
+            List.of(
+                "STRLEN".getBytes(StandardCharsets.UTF_8),
+                "bitmap_key".getBytes(StandardCharsets.UTF_8)),
+            storage);
+    assertEquals(":2\r\n", new String(strLen2, StandardCharsets.UTF_8));
+  }
 }

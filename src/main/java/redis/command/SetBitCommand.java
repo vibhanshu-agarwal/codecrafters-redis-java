@@ -21,24 +21,36 @@ public class SetBitCommand implements Command {
     int bitValue;
     try {
       offset = Long.parseLong(new String(args.get(1), StandardCharsets.UTF_8));
+    } catch (NumberFormatException e) {
+      return RespResponse.error("bit offset is not an integer or out of range");
+    }
+
+    try {
       bitValue = Integer.parseInt(new String(args.get(2), StandardCharsets.UTF_8));
     } catch (NumberFormatException e) {
       return RespResponse.error("bit is not an integer or out of range");
     }
 
-    if (offset < 0) {
+    if (offset < 0 || offset > 4294967295L) {
       return RespResponse.error("bit offset is not an integer or out of range");
     }
     if (bitValue != 0 && bitValue != 1) {
       return RespResponse.error("The bit argument must be 1 or 0.");
     }
 
-    byte[] bytes;
     StoredValue storedValue = keyValuePairs.get(key);
+    if (storedValue != null && storedValue.isExpired()) {
+      keyValuePairs.remove(key);
+      storedValue = null;
+    }
+
+    byte[] bytes;
+    long expiryTime = StoredValue.NO_EXPIRY;
     if (storedValue == null) {
       bytes = new byte[(int) (offset / 8) + 1];
     } else if (storedValue instanceof RedisString) {
       bytes = ((RedisString) storedValue).getValue();
+      expiryTime = storedValue.getExpiryTime();
     } else {
       return RespResponse.wrongType();
     }
@@ -59,7 +71,7 @@ public class SetBitCommand implements Command {
       bytes[byteIndex] &= (byte) ~(1 << bitIndex);
     }
 
-    keyValuePairs.put(key, new RedisString(bytes));
+    keyValuePairs.put(key, new RedisString(bytes, expiryTime));
 
     BlockingCommandCoordinator.signalKeyChanged(key);
     return RespResponse.integer(originalBit);

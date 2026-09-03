@@ -65,6 +65,7 @@ public class CommandHandler {
     commands.put("SETBIT", new SetBitCommand());
     commands.put("GETBIT", new GetBitCommand());
     commands.put("GET", new GetCommand());
+    commands.put("STRLEN", new StrLenCommand());
     commands.put("KEYS", new KeysCommand());
     commands.put("RPUSH", new RPushCommand());
     commands.put("LRANGE", new LRangeCommand());
